@@ -1,0 +1,17 @@
+{
+  "id": "./",
+  "name": "CNG Fuel Log",
+  "short_name": "CNG Log",
+  "description": "Log CNG bus fills at the station, with or without internet, and send Excel reports.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0F5C66",
+  "theme_color": "#0F5C66",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
