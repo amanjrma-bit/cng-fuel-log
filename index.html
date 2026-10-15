@@ -69,6 +69,7 @@ h2{font-family:var(--cond);font-size:1.35rem;margin:0 0 12px;font-weight:700}
 .field input,.field select{width:100%;background:var(--field);border:1.5px solid var(--line);border-radius:8px;padding:12px;font-size:1.1rem;min-height:50px}
 .field input:focus,.field select:focus,.addrow input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px color-mix(in srgb,var(--teal) 25%,transparent)}
 .field.big input{font-family:var(--cond);font-size:1.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+.field.big input::placeholder{text-transform:none;font-weight:600}
 .timerow{display:flex;gap:8px}
 .timerow input{flex:1;min-width:0}
 .now{flex:0 0 auto;border:0;border-radius:8px;background:var(--teal);color:var(--teal-ink);font-weight:700;padding:0 16px;min-height:50px;cursor:pointer}
@@ -155,78 +156,110 @@ nav.tabs button[aria-selected="true"]{color:var(--ink);border-top-color:var(--ye
 .toast.show{opacity:1}
 @media (prefers-reduced-motion:reduce){.toast{transition:none}}
 @media (max-width:360px){ .seg button{padding:9px 11px} nav.tabs button{font-size:.88rem} }
+/* v2 additions: language switch, KG calculator, four-pump readings */
+.brand .right{display:flex;align-items:baseline;gap:10px}
+.langbtn{border:1px solid rgba(255,255,255,.45);background:transparent;color:inherit;border-radius:6px;padding:3px 9px;font-family:var(--cond);font-weight:700;font-size:1rem;cursor:pointer;letter-spacing:.04em}
+.langpick{display:flex;gap:8px;margin-bottom:14px}
+.langpick button{flex:1;min-height:46px;border:1.5px solid var(--line);background:var(--field);border-radius:8px;font-weight:700;cursor:pointer}
+.langpick button[aria-pressed="true"]{background:var(--teal);color:var(--teal-ink);border-color:var(--teal)}
+.calcbtn{flex:0 0 auto;width:50px;min-height:50px;border:1.5px solid var(--teal);background:var(--panel);color:var(--teal);border-radius:8px;display:grid;place-items:center;cursor:pointer;padding:0}
+.calcbtn svg{width:22px;height:22px}
+.calc{position:fixed;inset:0;z-index:20;background:rgba(6,25,28,.5);display:flex;align-items:flex-end;justify-content:center}
+.calc-in{background:var(--panel);width:100%;max-width:560px;border-radius:16px 16px 0 0;padding:14px 14px calc(14px + env(safe-area-inset-bottom,0px));box-shadow:0 -6px 24px rgba(0,0,0,.25)}
+.calc-in h2{margin-bottom:8px}
+.cdisp{background:var(--field);border:1.5px solid var(--line);border-radius:10px;padding:8px 12px;text-align:right;min-height:82px}
+.cdisp .ex{font-size:1.15rem;color:var(--muted);word-break:break-all;min-height:1.5em;font-variant-numeric:tabular-nums}
+.cdisp .res{font-family:var(--cond);font-size:2.3rem;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums}
+.calc-in .hint{margin:6px 0 0}
+.keys{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:10px 0 12px}
+.keys button{min-height:54px;border-radius:10px;border:1.5px solid var(--line);background:var(--field);font-size:1.4rem;font-weight:700;cursor:pointer}
+.keys .op{background:var(--panel);color:var(--teal);border-color:color-mix(in srgb,var(--teal) 45%,var(--line))}
+.keys .clr{color:var(--danger)}
+.keys .eq{grid-row:span 2;background:var(--teal);color:var(--teal-ink);border-color:var(--teal)}
+.keys .zero{grid-column:span 2}
+.pumpread{border-top:1px solid var(--line);padding-top:12px;margin-top:2px}
+.pumpread:first-of-type{border-top:0;padding-top:0}
+.pumpread h3{font-family:var(--cond);font-size:1.2rem;margin:0 0 8px}
+.pumpread .grid2 .field{margin-bottom:6px}
+.pumpread .filled{font-size:.9rem;color:var(--muted);margin:0 0 12px;min-height:1.2em}
+.field input.pre{border-color:var(--yellow);background:color-mix(in srgb,var(--yellow) 12%,var(--field))}
+.recon p.sum{border-top:1px solid var(--line);padding-top:6px;margin-top:8px;font-weight:700}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header class="top">
-    <div class="brand"><h1>CNG Fuel Log</h1><div class="tally" id="tally">0 buses · 0 kg</div></div>
+    <div class="brand"><h1>CNG Fuel Log</h1><div class="right"><button type="button" class="langbtn" id="langBtn" aria-label="Kiswahili">SW</button><div class="tally" id="tally"></div></div></div>
     <div class="shiftbar">
-      <input type="date" id="date" aria-label="Shift date">
-      <div class="seg" role="group" aria-label="Shift">
-        <button type="button" data-shift="day" aria-pressed="true">Day</button>
-        <button type="button" data-shift="night" aria-pressed="false">Night</button>
+      <input type="date" id="date" data-i18n-aria="date.aria">
+      <div class="seg" role="group">
+        <button type="button" data-shift="day" aria-pressed="true" data-i18n="shift.day">Day</button>
+        <button type="button" data-shift="night" aria-pressed="false" data-i18n="shift.night">Night</button>
       </div>
     </div>
   </header>
 
   <div class="banner" id="banner" hidden></div>
-  <div class="banner upd" id="upd" hidden><span>A new version of the app is ready.</span><button type="button" class="now" id="updBtn">Update</button></div>
+  <div class="banner upd" id="upd" hidden><span data-i18n="upd.text"></span><button type="button" class="now" id="updBtn" data-i18n="upd.btn"></button></div>
 
   <!-- ADD -->
   <section class="view" id="v-add">
     <div class="card welcome" id="install" hidden>
-      <h2>Put the app on your home screen</h2>
-      <p id="instText">It opens like a normal app and works without internet.</p>
+      <h2 data-i18n="inst.h"></h2>
+      <p id="instText"></p>
       <ol class="steps" id="instSteps" hidden></ol>
-      <button class="primary" id="instBtn" type="button" hidden>Install app</button>
-      <button class="secondary" id="instLater" type="button">Not now</button>
+      <button class="primary" id="instBtn" type="button" hidden data-i18n="inst.btn"></button>
+      <button class="secondary" id="instLater" type="button" data-i18n="inst.later"></button>
     </div>
 
     <div class="card welcome" id="welcome" hidden>
-      <h2>Welcome</h2>
-      <p>This app works without internet. Everything you enter stays saved on this phone.</p>
-      <div class="field"><label for="wName">Your name (pump attendant)</label><input id="wName" autocapitalize="words" autocomplete="off"></div>
-      <button class="primary" id="wSave" type="button">Start</button>
+      <h2 data-i18n="welcome.h"></h2>
+      <div class="langpick" role="group" data-i18n-aria="welcome.lang">
+        <button type="button" data-lang="en">English</button>
+        <button type="button" data-lang="sw">Kiswahili</button>
+      </div>
+      <p data-i18n="welcome.p"></p>
+      <div class="field"><label for="wName" data-i18n="welcome.name"></label><input id="wName" autocapitalize="words" autocomplete="off"></div>
+      <button class="primary" id="wSave" type="button" data-i18n="welcome.start"></button>
     </div>
 
     <div class="openbox" id="openBox" hidden>
-      <h3 id="openTitle">Not finished yet. Tap to complete:</h3>
+      <h3 data-i18n="open.title"></h3>
       <div class="chips open" id="openChips"></div>
     </div>
 
     <form class="card" id="form" autocomplete="off" novalidate>
-      <h2 id="formTitle">Add a bus</h2>
+      <h2 id="formTitle"></h2>
       <div class="field big">
-        <label for="bus">Bus number</label>
-        <input id="bus" list="busList" inputmode="text" placeholder="e.g. T 123 ABC" required>
+        <label for="bus" data-i18n="f.bus"></label>
+        <input id="bus" list="busList" inputmode="text" data-i18n-ph="f.bus.ph" required>
         <datalist id="busList"></datalist>
       </div>
       <div class="field">
-        <label for="driver">Driver name</label>
+        <label for="driver" data-i18n="f.driver"></label>
         <input id="driver" list="driverList" autocapitalize="words">
         <datalist id="driverList"></datalist>
       </div>
       <div class="field">
-        <label for="route">Route</label>
-        <select id="route"><option value="">Choose route</option></select>
+        <label for="route" data-i18n="f.route"></label>
+        <select id="route"><option value=""></option></select>
       </div>
-      <p class="hint" id="routeHint">No routes yet. Add them in the Routes tab.</p>
+      <p class="hint" id="routeHint" data-i18n="f.route.hint"></p>
       <div class="field">
-        <label for="arrival">Arrived at station</label>
-        <div class="timerow"><input type="time" id="arrival"><button type="button" class="now" data-now="arrival">Now</button></div>
-      </div>
-      <div class="field">
-        <label for="tin">In to pump</label>
-        <div class="timerow"><input type="time" id="tin"><button type="button" class="now" data-now="tin">Now</button></div>
+        <label for="arrival" data-i18n="f.arrival"></label>
+        <div class="timerow"><input type="time" id="arrival"><button type="button" class="now" data-now="arrival" data-i18n="now"></button></div>
       </div>
       <div class="field">
-        <label for="tout">Out of pump</label>
-        <div class="timerow"><input type="time" id="tout"><button type="button" class="now" data-now="tout">Now</button></div>
+        <label for="tin" data-i18n="f.in"></label>
+        <div class="timerow"><input type="time" id="tin"><button type="button" class="now" data-now="tin" data-i18n="now"></button></div>
       </div>
       <div class="field">
-        <label>Pump</label>
-        <div class="pumps" role="group" aria-label="Pump">
+        <label for="tout" data-i18n="f.out"></label>
+        <div class="timerow"><input type="time" id="tout"><button type="button" class="now" data-now="tout" data-i18n="now"></button></div>
+      </div>
+      <div class="field">
+        <label data-i18n="f.pump"></label>
+        <div class="pumps" role="group">
           <button type="button" data-pump="1" aria-pressed="false">1</button>
           <button type="button" data-pump="2" aria-pressed="false">2</button>
           <button type="button" data-pump="3" aria-pressed="false">3</button>
@@ -234,37 +267,39 @@ nav.tabs button[aria-selected="true"]{color:var(--ink);border-top-color:var(--ye
         </div>
       </div>
       <div class="grid2">
-        <div class="field"><label for="kg">KG filled</label><input id="kg" type="number" inputmode="decimal" step="0.01" min="0"></div>
-        <div class="field"><label for="km">KM travelled</label><input id="km" type="number" inputmode="decimal" step="0.1" min="0"></div>
+        <div class="field"><label for="kg" data-i18n="f.kg"></label>
+          <div class="timerow"><input id="kg" type="number" inputmode="decimal" step="0.01" min="0">
+            <button type="button" class="calcbtn" id="calcOpen" data-i18n-aria="calc.open"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="4" y="2.5" width="16" height="19" rx="2.5"/><rect x="7.5" y="5.5" width="9" height="4" rx="1"/><path d="M8 13h.01M12 13h.01M16 13h.01M8 17h.01M12 17h.01M16 17h.01"/></svg></button></div></div>
+        <div class="field"><label for="km" data-i18n="f.km"></label><input id="km" type="number" inputmode="decimal" step="0.1" min="0"></div>
       </div>
-      <p class="hint">You can save a bus when it arrives and finish it later.</p>
+      <p class="hint" data-i18n="form.later"></p>
       <p class="warn" id="formWarn" role="alert"></p>
-      <button class="primary" id="saveBtn" type="submit">Save bus</button>
-      <button class="secondary" id="cancelEdit" type="button" hidden>Cancel edit</button>
-      <button class="secondary danger" id="deleteBtn" type="button" hidden>Delete this entry</button>
+      <button class="primary" id="saveBtn" type="submit"></button>
+      <button class="secondary" id="cancelEdit" type="button" hidden data-i18n="cancel.edit"></button>
+      <button class="secondary danger" id="deleteBtn" type="button" hidden data-i18n="delete.entry"></button>
     </form>
   </section>
 
   <!-- LOG -->
   <section class="view" id="v-log" hidden>
     <div class="sum">
-      <div><b id="sBuses">0</b><span>buses</span></div>
-      <div><b id="sKg">0</b><span>kg total</span></div>
-      <div><b id="sWait">–</b><span>avg wait (min)</span></div>
+      <div><b id="sBuses">0</b><span data-i18n="log.buses"></span></div>
+      <div><b id="sKg">0</b><span data-i18n="log.kg"></span></div>
+      <div><b id="sWait">–</b><span data-i18n="log.wait"></span></div>
     </div>
-    <div class="chips" id="logFilter" role="group" aria-label="Filter by route"></div>
+    <div class="chips" id="logFilter" role="group" data-i18n-aria="log.filter"></div>
     <div class="list" id="list"></div>
   </section>
 
   <!-- ROUTES -->
   <section class="view" id="v-route" hidden>
     <div class="card">
-      <h2>This shift by route</h2>
+      <h2 data-i18n="route.sum"></h2>
       <div class="rtbl" id="routeSum"></div>
     </div>
     <div class="card">
-      <h2>Bus routes</h2>
-      <div class="addrow"><input id="newRoute" placeholder="e.g. Kimara – Kivukoni" aria-label="New route name" autocapitalize="words"><button class="now" id="addRoute" type="button">Add</button></div>
+      <h2 data-i18n="route.h"></h2>
+      <div class="addrow"><input id="newRoute" data-i18n-ph="route.ph" data-i18n-aria="route.new" autocapitalize="words"><button class="now" id="addRoute" type="button" data-i18n="route.add"></button></div>
       <ul class="rlist" id="routeList"></ul>
     </div>
   </section>
@@ -272,16 +307,12 @@ nav.tabs button[aria-selected="true"]{color:var(--ink);border-top-color:var(--ye
   <!-- READINGS -->
   <section class="view" id="v-read" hidden>
     <form class="card" id="rform" novalidate>
-      <h2>Pump meter readings</h2>
-      <div class="grid2">
-        <div class="field"><label for="p2o">Pump 2 opening</label><input id="p2o" type="number" inputmode="decimal" step="0.01"></div>
-        <div class="field"><label for="p3o">Pump 3 opening</label><input id="p3o" type="number" inputmode="decimal" step="0.01"></div>
-        <div class="field"><label for="p2c">Pump 2 closing</label><input id="p2c" type="number" inputmode="decimal" step="0.01"></div>
-        <div class="field"><label for="p3c">Pump 3 closing</label><input id="p3c" type="number" inputmode="decimal" step="0.01"></div>
-      </div>
-      <div class="field"><label for="att">Attendant on duty</label><input id="att" autocapitalize="words"></div>
-      <div class="field"><label for="notes">Notes</label><input id="notes"></div>
-      <button class="primary" id="rsave" type="submit">Save readings</button>
+      <h2 data-i18n="read.h"></h2>
+      <p class="hint" id="preHint" hidden data-i18n="read.prefill" style="margin:0 0 12px"></p>
+      <div id="pumpInputs"></div>
+      <div class="field"><label for="att" data-i18n="read.att"></label><input id="att" autocapitalize="words"></div>
+      <div class="field"><label for="notes" data-i18n="read.notes"></label><input id="notes"></div>
+      <button class="primary" id="rsave" type="submit" data-i18n="read.save"></button>
       <div class="recon" id="recon"></div>
     </form>
   </section>
@@ -289,51 +320,65 @@ nav.tabs button[aria-selected="true"]{color:var(--ink);border-top-color:var(--ye
   <!-- SEND -->
   <section class="view send" id="v-send" hidden>
     <div class="card">
-      <h2>Send to supervisor</h2>
-      <p>Makes an Excel file for the shift on top of the screen. It saves to your phone, then you attach it in WhatsApp.</p>
-      <button class="primary" id="xShift" type="button">Excel: this shift</button>
-      <button class="primary" id="xDay" type="button">Excel: both shifts of this date</button>
-      <button class="secondary" id="waSum" type="button">Send shift summary as a WhatsApp message</button>
-      <ol class="steps">
-        <li>Tap an Excel button. The file goes to <b>Downloads</b>.</li>
-        <li>In WhatsApp, open the chat, tap the clip, then <b>Document</b>.</li>
-        <li>Pick the file starting with <b>CNG_</b>.</li>
-      </ol>
+      <h2 data-i18n="send.h"></h2>
+      <p data-i18n="send.p"></p>
+      <button class="primary" id="xShift" type="button" data-i18n="x.shift"></button>
+      <button class="primary" id="xDay" type="button" data-i18n="x.day"></button>
+      <button class="secondary" id="waSum" type="button" data-i18n="wa.btn"></button>
+      <ol class="steps"><li data-i18n-html="step1"></li><li data-i18n-html="step2"></li><li data-i18n-html="step3"></li></ol>
     </div>
 
     <div class="card">
-      <h2>Whole month</h2>
-      <p>Summary sheet, Routes sheet and one sheet per shift.</p>
-      <div class="month"><input type="month" id="month" aria-label="Month"><button class="now" id="xMonth" type="button">Excel</button></div>
+      <h2 data-i18n="month.h"></h2>
+      <p data-i18n="month.p"></p>
+      <div class="month"><input type="month" id="month" data-i18n-aria="month.aria"><button class="now" id="xMonth" type="button" data-i18n="month.btn"></button></div>
     </div>
 
     <div class="card">
-      <h2>Add data from another phone</h2>
-      <p>Supervisor: open an Excel file made by this app (from WhatsApp or Downloads). Its buses join this phone's log. Files sent twice are not counted twice.</p>
-      <label class="secondary filepick">Choose file<input type="file" id="imp" aria-label="Choose a file to add"></label>
+      <h2 data-i18n="imp.h"></h2>
+      <p data-i18n="imp.p"></p>
+      <label class="secondary filepick"><span data-i18n="imp.btn"></span><input type="file" id="imp" data-i18n-aria="imp.aria"></label>
     </div>
 
     <div class="card">
-      <h2>This phone</h2>
-      <div class="field"><label for="devName">Attendant name on this phone</label><input id="devName" autocapitalize="words" autocomplete="off"></div>
+      <h2 data-i18n="phone.h"></h2>
+      <div class="field"><label for="devName" data-i18n="phone.name"></label><input id="devName" autocapitalize="words" autocomplete="off"></div>
       <p class="small" id="storeInfo"></p>
       <div class="meter" id="meter"><i id="meterBar" style="width:0%"></i></div>
       <p class="small" id="lastSave"></p>
-      <button class="secondary" id="backup" type="button">Save full backup file</button>
-      <button class="secondary" id="shareApp" type="button" hidden>Send this app to another phone</button>
-      <p class="small" style="margin-top:14px">Phone getting full? Send a month's Excel first, then remove that month here.</p>
-      <div class="month"><input type="month" id="delMonth" aria-label="Month to remove"><button class="secondary danger" id="delBtn" type="button" style="width:auto;margin:0;padding:0 16px">Remove</button></div>
+      <button class="secondary" id="backup" type="button" data-i18n="backup"></button>
+      <button class="secondary" id="shareApp" type="button" hidden data-i18n="shareapp"></button>
+      <p class="small" style="margin-top:14px" data-i18n="full.p"></p>
+      <div class="month"><input type="month" id="delMonth" data-i18n-aria="delmonth.aria"><button class="secondary danger" id="delBtn" type="button" style="width:auto;margin:0;padding:0 16px" data-i18n="remove"></button></div>
     </div>
   </section>
 </div>
 
+<!-- KG calculator -->
+<div class="calc" id="calc" hidden role="dialog" aria-modal="true" aria-labelledby="calcH">
+  <div class="calc-in">
+    <h2 id="calcH" data-i18n="calc.h"></h2>
+    <div class="cdisp"><div class="ex" id="cEx"></div><div class="res" id="cRes">0</div></div>
+    <p class="hint" data-i18n="calc.hint"></p>
+    <div class="keys" id="keys">
+      <button type="button" class="clr" data-k="C">C</button><button type="button" class="op" data-k="B" aria-label="Delete">⌫</button><button type="button" class="op" data-k="÷">÷</button><button type="button" class="op" data-k="×">×</button>
+      <button type="button" data-k="7">7</button><button type="button" data-k="8">8</button><button type="button" data-k="9">9</button><button type="button" class="op" data-k="−">−</button>
+      <button type="button" data-k="4">4</button><button type="button" data-k="5">5</button><button type="button" data-k="6">6</button><button type="button" class="op" data-k="+">+</button>
+      <button type="button" data-k="1">1</button><button type="button" data-k="2">2</button><button type="button" data-k="3">3</button><button type="button" class="eq" data-k="=">=</button>
+      <button type="button" class="zero" data-k="0">0</button><button type="button" data-k=".">.</button>
+    </div>
+    <button class="primary" id="cUse" type="button"></button>
+    <button class="secondary" id="cClose" type="button" data-i18n="calc.close"></button>
+  </div>
+</div>
+
 <nav class="tabs" role="tablist">
   <div class="in">
-    <button role="tab" data-tab="add" aria-selected="true">Add bus</button>
-    <button role="tab" data-tab="log" aria-selected="false">Log</button>
-    <button role="tab" data-tab="route" aria-selected="false">Routes</button>
-    <button role="tab" data-tab="read" aria-selected="false">Readings</button>
-    <button role="tab" data-tab="send" aria-selected="false">Send</button>
+    <button role="tab" data-tab="add" aria-selected="true" data-i18n="tab.add"></button>
+    <button role="tab" data-tab="log" aria-selected="false" data-i18n="tab.log"></button>
+    <button role="tab" data-tab="route" aria-selected="false" data-i18n="tab.route"></button>
+    <button role="tab" data-tab="read" aria-selected="false" data-i18n="tab.read"></button>
+    <button role="tab" data-tab="send" aria-selected="false" data-i18n="tab.send"></button>
   </div>
 </nav>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -354,6 +399,140 @@ const APP = "cng-fuel-log";
 const KEY = "cngfuellog:v1";
 const LIMIT = 5000000; // approx. characters a phone browser keeps per app
 
+/* ---------- English / Kiswahili ---------- */
+const I18N = {
+en: {
+  "lang.other":"SW", "lang.otherName":"Kiswahili",
+  "shift.day":"Day", "shift.night":"Night", "shift.day.l":"day", "shift.night.l":"night",
+  "tab.add":"Add bus", "tab.log":"Log", "tab.route":"Routes", "tab.read":"Readings", "tab.send":"Send",
+  "date.aria":"Shift date",
+  "busesN":"{n} buses", "bus1":"1 bus",
+  "welcome.h":"Welcome", "welcome.p":"This app works without internet. Everything you enter stays saved on this phone.",
+  "welcome.name":"Your name (pump attendant)", "welcome.start":"Start", "welcome.toast":"Welcome, {n}", "welcome.lang":"Language",
+  "open.title":"Not finished yet. Tap to complete:",
+  "form.add":"Add a bus", "form.edit":"Edit {bus}",
+  "f.bus":"Bus number", "f.bus.ph":"e.g. T 123 ABC", "f.driver":"Driver name", "f.route":"Route", "f.route.choose":"Choose route",
+  "f.route.hint":"No routes yet. Add them in the Routes tab.", "f.arrival":"Arrived at station", "f.in":"In to pump", "f.out":"Out of pump",
+  "now":"Now", "f.pump":"Pump", "f.kg":"KG filled", "f.km":"KM travelled", "form.later":"You can save a bus when it arrives and finish it later.",
+  "save.bus":"Save bus", "save.changes":"Save changes", "cancel.edit":"Cancel edit", "delete.entry":"Delete this entry",
+  "warn.bus":"Type the bus number.", "warn.nums":"KG and KM must be numbers, 0 or more.",
+  "warn.wait":"Check times: waiting {m} min before the pump.", "warn.fill":"Check times: {m} min at the pump.",
+  "confirm.bigkg":"{kg} kg is a lot for one bus. Save anyway?",
+  "confirm.dup":"{bus} is already in this shift{arr}. Save another fill?", "confirm.dup.arr":" (arrived {t})",
+  "toast.saved":"Saved {bus}", "toast.updated":"Updated {bus}", "confirm.del":"Delete {bus} from this shift?", "toast.deleted":"Deleted {bus}",
+  "calc.open":"Calculator", "calc.h":"KG calculator", "calc.hint":"Example: meter after − meter before", "calc.use":"Use {v} kg", "calc.close":"Close",
+  "log.buses":"buses", "log.kg":"kg total", "log.wait":"avg wait (min)", "log.all":"All", "log.noroute":"No route", "log.nodriver":"No driver",
+  "log.unfinished":"not finished", "log.notimes":"No times", "log.empty":"No buses in this {shift} shift yet.", "log.arr":"Arr", "log.in":"In", "log.out":"Out", "log.filter":"Filter by route",
+  "route.sum":"This shift by route", "route.h":"Bus routes", "route.ph":"e.g. Kimara – Kivukoni", "route.add":"Add", "route.new":"New route name",
+  "th.route":"Route", "th.buses":"Buses", "total":"Total", "route.none":"No buses in this shift yet.", "route.fills":"{n} fills saved",
+  "route.remove":"Remove", "route.empty":"No routes yet. Type one above and tap Add.", "toast.routeexists":"Route already listed", "toast.routeadded":"Added {r}",
+  "confirm.routedel":"Remove route \"{r}\" from the list? Buses already saved keep it.",
+  "read.h":"Pump meter readings", "read.pump":"Pump {n}", "read.open":"Opening", "read.close":"Closing", "read.filled":"Filled: {v} kg",
+  "read.att":"Attendant on duty", "read.notes":"Notes", "read.save":"Save readings", "toast.readsaved":"Readings saved",
+  "read.prefill":"Openings filled in from the last closing readings. Check them, then save.",
+  "recon.meter":"Pump {n}: meter {m} kg, logged {l} kg", "recon.logged":"Pump {n}: logged {l} kg, no meter reading", "recon.nopump":"No pump chosen",
+  "recon.total":"All pumps: meter {m} kg, logged {l} kg",
+  "send.h":"Send to supervisor", "send.p":"Makes an Excel file in the office layout (one sheet per date) for the shift on top of the screen. It saves to your phone, then you attach it in WhatsApp.",
+  "x.shift":"Excel: this shift", "x.day":"Excel: both shifts of this date", "wa.btn":"Send shift summary as a WhatsApp message",
+  "step1":"Tap an Excel button. The file goes to <b>Downloads</b>.", "step2":"In WhatsApp, open the chat, tap the clip, then <b>Document</b>.", "step3":"Pick the file starting with <b>CNG_</b>.",
+  "month.h":"Whole month", "month.p":"Same as the office master: one sheet for every date, day and night shifts, and the pump check.", "month.btn":"Excel", "month.aria":"Month",
+  "imp.h":"Add data from another phone", "imp.p":"Supervisor: open an Excel file made by this app (from WhatsApp or Downloads). Its buses join this phone's log. Files sent twice are not counted twice.",
+  "imp.btn":"Choose file", "imp.aria":"Choose a file to add",
+  "phone.h":"This phone", "phone.name":"Attendant name on this phone", "store.info":"{n} bus fills saved on this phone · about {p}% of the space used",
+  "last.save":"Last Excel or backup made: {d} at {t}", "last.none":"No Excel or backup made yet.", "backup":"Save full backup file", "shareapp":"Send this app to another phone",
+  "full.p":"Phone getting full? Send a month's Excel first, then remove that month here.", "remove":"Remove", "delmonth.aria":"Month to remove",
+  "nothing.shift":"Nothing saved in this shift yet", "nothing.date":"Nothing saved on {d} yet", "nothing.month":"Nothing saved in {m}", "pick.month":"Pick a month",
+  "saved.dl":"Saved to Downloads: {f}", "name.saved":"Name saved",
+  "imp.added":"Added {n} buses{u}{from}", "imp.updated":", updated {n}", "imp.from":" from {n}", "imp.nothing":"Nothing new{from}. Already added.",
+  "imp.notours":"This file was not made by CNG Fuel Log.", "imp.bad":"Could not read that file.",
+  "confirm.delmonth":"Remove {m} from this phone? Make sure its Excel has been sent first. This cannot be undone.", "toast.removed":"Removed {m}",
+  "ban.full":"This phone's space for the app is full. Go to Send, save the old month's Excel, then remove that month.",
+  "ban.fail":"Could not save on this phone. Open the app in Chrome and try again.",
+  "ban.cant":"This screen cannot save your work. Save the file to the phone (Downloads), then open it with Chrome.",
+  "ban.xlsx":"Excel part did not load. Ask for the app again.",
+  "wa.title":"*CNG Fuel Log – {s} shift*", "wa.date":"Date: {d}", "wa.att":"Attendant: {a}", "wa.buses":"Buses: {n}", "wa.kg":"KG filled: {v}", "wa.km":"KM: {v}",
+  "wa.wait":"Avg wait: {m} min", "wa.pump":"Pump {n} meter: {m} kg (logged {l})", "wa.open":"Not finished: {n}", "wa.byroute":"By route:", "wa.route":"• {r}: {n}, {kg} kg", "wa.notes":"Notes: {t}",
+  "upd.text":"A new version of the app is ready.", "upd.btn":"Update",
+  "inst.h":"Put the app on your home screen", "inst.p":"It opens like a normal app and works without internet.", "inst.btn":"Install app", "inst.later":"Not now",
+  "inst.prompt":"Tap Install. The app gets its own icon and works without internet.", "inst.done":"Installed. Open CNG Log from your home screen.",
+  "inst.ios":"On iPhone it takes three taps:", "inst.ios1":"Tap the <b>Share</b> button (square with an arrow).", "inst.ios2":"Scroll down and tap <b>Add to Home Screen</b>, then <b>Add</b>.",
+  "inst.ios3":"Open <b>CNG Log</b> from your home screen and work there. Work typed here in the browser does not move into the home screen app.",
+  "inst.inapp":"Open this link in Safari first, then add it to your home screen.", "inst.inapp1":"Tap the <b>⋯</b> or compass button.", "inst.inapp2":"Choose <b>Open in Safari</b>.",
+  "inst.android":"Add it from the browser menu:", "inst.and1":"Opened from WhatsApp? Tap <b>⋮</b> then <b>Open in Chrome</b> first.", "inst.and2":"In Chrome tap <b>⋮</b> then <b>Add to Home screen</b> or <b>Install app</b>.",
+  "share.text":"CNG Fuel Log app. Open this link, then add it to your home screen:",
+  "months":"January,February,March,April,May,June,July,August,September,October,November,December"
+},
+sw: {
+  "lang.other":"EN", "lang.otherName":"English",
+  "shift.day":"Mchana", "shift.night":"Usiku", "shift.day.l":"mchana", "shift.night.l":"usiku",
+  "tab.add":"Ongeza", "tab.log":"Orodha", "tab.route":"Njia", "tab.read":"Mita", "tab.send":"Tuma",
+  "date.aria":"Tarehe ya zamu",
+  "busesN":"Mabasi {n}", "bus1":"Basi 1",
+  "welcome.h":"Karibu", "welcome.p":"Programu hii inafanya kazi bila intaneti. Kila unachoandika kinabaki kimehifadhiwa kwenye simu hii.",
+  "welcome.name":"Jina lako (mhudumu wa pampu)", "welcome.start":"Anza", "welcome.toast":"Karibu, {n}", "welcome.lang":"Lugha",
+  "open.title":"Bado hayajakamilika. Gusa ili kukamilisha:",
+  "form.add":"Ongeza basi", "form.edit":"Badilisha {bus}",
+  "f.bus":"Namba ya basi", "f.bus.ph":"mfano T 123 ABC", "f.driver":"Jina la dereva", "f.route":"Njia", "f.route.choose":"Chagua njia",
+  "f.route.hint":"Bado hakuna njia. Ziongeze kwenye kichupo cha Njia.", "f.arrival":"Muda wa kufika kituoni", "f.in":"Muda wa kuingia pampu", "f.out":"Muda wa kutoka pampu",
+  "now":"Sasa", "f.pump":"Pampu", "f.kg":"KG zilizojazwa", "f.km":"KM zilizotembea", "form.later":"Unaweza kuhifadhi basi likifika, kisha ukamilishe baadaye.",
+  "save.bus":"Hifadhi basi", "save.changes":"Hifadhi mabadiliko", "cancel.edit":"Ghairi", "delete.entry":"Futa basi hili",
+  "warn.bus":"Andika namba ya basi.", "warn.nums":"KG na KM lazima ziwe namba, 0 au zaidi.",
+  "warn.wait":"Angalia muda: kusubiri dakika {m} kabla ya pampu.", "warn.fill":"Angalia muda: dakika {m} kwenye pampu.",
+  "confirm.bigkg":"Kg {kg} ni nyingi kwa basi moja. Hifadhi hata hivyo?",
+  "confirm.dup":"{bus} tayari limo kwenye zamu hii{arr}. Hifadhi ujazaji mwingine?", "confirm.dup.arr":" (lilifika {t})",
+  "toast.saved":"{bus} limehifadhiwa", "toast.updated":"{bus} limebadilishwa", "confirm.del":"Futa {bus} kwenye zamu hii?", "toast.deleted":"{bus} limefutwa",
+  "calc.open":"Kikokotoo", "calc.h":"Kikokotoo cha KG", "calc.hint":"Mfano: mita baada − mita kabla", "calc.use":"Tumia kg {v}", "calc.close":"Funga",
+  "log.buses":"mabasi", "log.kg":"jumla kg", "log.wait":"wastani wa kusubiri (dak)", "log.all":"Zote", "log.noroute":"Hakuna njia", "log.nodriver":"Hakuna dereva",
+  "log.unfinished":"haijakamilika", "log.notimes":"Hakuna muda", "log.empty":"Bado hakuna mabasi kwenye zamu hii ya {shift}.", "log.arr":"Fika", "log.in":"Ndani", "log.out":"Nje", "log.filter":"Chuja kwa njia",
+  "route.sum":"Zamu hii kwa njia", "route.h":"Njia za mabasi", "route.ph":"mfano Kimara – Kivukoni", "route.add":"Ongeza", "route.new":"Jina la njia mpya",
+  "th.route":"Njia", "th.buses":"Mabasi", "total":"Jumla", "route.none":"Bado hakuna mabasi kwenye zamu hii.", "route.fills":"Ujazaji {n} umehifadhiwa",
+  "route.remove":"Ondoa", "route.empty":"Bado hakuna njia. Andika moja hapo juu kisha gusa Ongeza.", "toast.routeexists":"Njia hiyo tayari ipo", "toast.routeadded":"{r} imeongezwa",
+  "confirm.routedel":"Ondoa njia \"{r}\" kwenye orodha? Mabasi yaliyokwisha hifadhiwa yataendelea kuwa nayo.",
+  "read.h":"Usomaji wa mita za pampu", "read.pump":"Pampu {n}", "read.open":"Mwanzo", "read.close":"Mwisho", "read.filled":"Imejaza: kg {v}",
+  "read.att":"Mhudumu wa zamu", "read.notes":"Maelezo", "read.save":"Hifadhi usomaji", "toast.readsaved":"Usomaji umehifadhiwa",
+  "read.prefill":"Usomaji wa mwanzo umejazwa kutoka usomaji wa mwisho uliopita. Hakikisha, kisha hifadhi.",
+  "recon.meter":"Pampu {n}: mita kg {m}, zimeandikwa kg {l}", "recon.logged":"Pampu {n}: zimeandikwa kg {l}, hakuna usomaji wa mita", "recon.nopump":"Pampu haikuchaguliwa",
+  "recon.total":"Pampu zote: mita kg {m}, zimeandikwa kg {l}",
+  "send.h":"Tuma kwa msimamizi", "send.p":"Inatengeneza faili la Excel kwa mpangilio wa ofisi (karatasi moja kwa kila tarehe) kwa zamu iliyo juu ya skrini. Linahifadhiwa kwenye simu, kisha unalituma kwa WhatsApp.",
+  "x.shift":"Excel: zamu hii", "x.day":"Excel: zamu zote za tarehe hii", "wa.btn":"Tuma muhtasari wa zamu kwa ujumbe wa WhatsApp",
+  "step1":"Gusa kitufe cha Excel. Faili linaingia kwenye <b>Downloads</b>.", "step2":"Kwenye WhatsApp, fungua mazungumzo, gusa alama ya kibanio, kisha <b>Document</b>.", "step3":"Chagua faili linaloanza na <b>CNG_</b>.",
+  "month.h":"Mwezi mzima", "month.p":"Sawa na faili kuu la ofisi: karatasi kwa kila tarehe, zamu za mchana na usiku, na ulinganisho wa pampu.", "month.btn":"Excel", "month.aria":"Mwezi",
+  "imp.h":"Ongeza taarifa kutoka simu nyingine", "imp.p":"Msimamizi: fungua faili la Excel lililotengenezwa na programu hii (kutoka WhatsApp au Downloads). Mabasi yake yanaongezwa kwenye orodha ya simu hii. Faili likitumwa mara mbili halihesabiwi mara mbili.",
+  "imp.btn":"Chagua faili", "imp.aria":"Chagua faili la kuongeza",
+  "phone.h":"Simu hii", "phone.name":"Jina la mhudumu kwenye simu hii", "store.info":"Ujazaji wa mabasi {n} umehifadhiwa kwenye simu hii · takriban {p}% ya nafasi imetumika",
+  "last.save":"Excel au nakala ya mwisho: {d} saa {t}", "last.none":"Bado hujatengeneza Excel wala nakala.", "backup":"Hifadhi nakala kamili", "shareapp":"Tuma programu hii kwa simu nyingine",
+  "full.p":"Simu inajaa? Tuma kwanza Excel ya mwezi, kisha ondoa mwezi huo hapa.", "remove":"Ondoa", "delmonth.aria":"Mwezi wa kuondoa",
+  "nothing.shift":"Bado hakuna kilichohifadhiwa kwenye zamu hii", "nothing.date":"Bado hakuna kilichohifadhiwa tarehe {d}", "nothing.month":"Hakuna kilichohifadhiwa {m}", "pick.month":"Chagua mwezi",
+  "saved.dl":"Imehifadhiwa kwenye Downloads: {f}", "name.saved":"Jina limehifadhiwa",
+  "imp.added":"Mabasi {n} yameongezwa{u}{from}", "imp.updated":", {n} yamebadilishwa", "imp.from":" kutoka kwa {n}", "imp.nothing":"Hakuna jipya{from}. Tayari yameongezwa.",
+  "imp.notours":"Faili hili halikutengenezwa na CNG Fuel Log.", "imp.bad":"Imeshindwa kusoma faili hilo.",
+  "confirm.delmonth":"Ondoa {m} kwenye simu hii? Hakikisha Excel yake imeshatumwa. Hii haiwezi kurudishwa.", "toast.removed":"{m} imeondolewa",
+  "ban.full":"Nafasi ya programu kwenye simu hii imejaa. Nenda Tuma, hifadhi Excel ya mwezi wa zamani, kisha uondoe mwezi huo.",
+  "ban.fail":"Imeshindwa kuhifadhi kwenye simu hii. Fungua programu kwenye Chrome kisha ujaribu tena.",
+  "ban.cant":"Skrini hii haiwezi kuhifadhi kazi yako. Hifadhi faili kwenye simu (Downloads), kisha lifungue kwa Chrome.",
+  "ban.xlsx":"Sehemu ya Excel haikufunguka. Omba programu tena.",
+  "wa.title":"*CNG Fuel Log – Zamu ya {s}*", "wa.date":"Tarehe: {d}", "wa.att":"Mhudumu: {a}", "wa.buses":"Mabasi: {n}", "wa.kg":"KG zilizojazwa: {v}", "wa.km":"KM: {v}",
+  "wa.wait":"Wastani wa kusubiri: dakika {m}", "wa.pump":"Mita ya pampu {n}: kg {m} (zimeandikwa {l})", "wa.open":"Hayajakamilika: {n}", "wa.byroute":"Kwa njia:", "wa.route":"• {r}: {n}, kg {kg}", "wa.notes":"Maelezo: {t}",
+  "upd.text":"Toleo jipya la programu liko tayari.", "upd.btn":"Sasisha",
+  "inst.h":"Weka programu kwenye skrini ya mwanzo", "inst.p":"Inafunguka kama programu ya kawaida na inafanya kazi bila intaneti.", "inst.btn":"Sakinisha programu", "inst.later":"Si sasa",
+  "inst.prompt":"Gusa Sakinisha. Programu itapata alama yake na kufanya kazi bila intaneti.", "inst.done":"Imesakinishwa. Fungua CNG Log kutoka skrini ya mwanzo.",
+  "inst.ios":"Kwenye iPhone ni hatua tatu:", "inst.ios1":"Gusa kitufe cha <b>Share</b> (mraba wenye mshale).", "inst.ios2":"Shuka chini, gusa <b>Add to Home Screen</b>, kisha <b>Add</b>.",
+  "inst.ios3":"Fungua <b>CNG Log</b> kutoka skrini ya mwanzo na ufanyie kazi humo. Ulichoandika hapa kwenye kivinjari hakihamii kwenye programu.",
+  "inst.inapp":"Fungua kiungo hiki kwenye Safari kwanza, kisha ukiweke kwenye skrini ya mwanzo.", "inst.inapp1":"Gusa kitufe cha <b>⋯</b> au cha dira.", "inst.inapp2":"Chagua <b>Open in Safari</b>.",
+  "inst.android":"Iongeze kupitia menyu ya kivinjari:", "inst.and1":"Umefungua kutoka WhatsApp? Gusa <b>⋮</b> kisha <b>Open in Chrome</b> kwanza.", "inst.and2":"Kwenye Chrome gusa <b>⋮</b> kisha <b>Add to Home screen</b> au <b>Install app</b>.",
+  "share.text":"Programu ya CNG Fuel Log. Fungua kiungo hiki, kisha iweke kwenye skrini ya mwanzo:",
+  "months":"Januari,Februari,Machi,Aprili,Mei,Juni,Julai,Agosti,Septemba,Oktoba,Novemba,Desemba"
+}
+};
+let LANG = "en";
+function t(k, v){
+  let s = (I18N[LANG] && I18N[LANG][k]) ?? I18N.en[k] ?? k;
+  if(v) s = s.replace(/\{(\w+)\}/g, (m,x) => v[x] ?? m);
+  return s;
+}
+const busesLabel = n => n===1 ? t("bus1") : t("busesN",{n});
+
+
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 const pad = n => String(n).padStart(2,"0");
@@ -365,14 +544,13 @@ const diff = (a,b) => { const x=mins(a), y=mins(b); if(x==null||y==null) return 
 const num = v => { if(v===""||v==null) return null; const n=Number(v); return isFinite(n) ? n : null; };
 const r2 = n => Math.round(n*100)/100;
 const fmt = n => r2(n).toLocaleString("en-US");
-const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-const MONTH = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 const dmy = s => s ? s.slice(8,10)+"/"+s.slice(5,7)+"/"+s.slice(0,4) : "";
-const monthLabel = m => MONTH[+m.slice(5,7)-1]+" "+m.slice(0,4);
-const shiftLabel = s => s==="night" ? "Night" : "Day";
+const monthLabel = m => t("months").split(",")[+m.slice(5,7)-1]+" "+m.slice(0,4);
+const shiftLabel = s => t(s==="night" ? "shift.night" : "shift.day");
 const uid = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : Date.now().toString(36)+Math.random().toString(36).slice(2,10)+Math.random().toString(36).slice(2,6);
 const safeName = s => String(s||"").trim().replace(/\s+/g,"-").replace(/[^A-Za-z0-9_-]/g,"").slice(0,24);
 const normBus = v => String(v||"").toUpperCase().replace(/\s+/g," ").trim();
+const PUMPS = [1,2,3,4];
 
 // Default shift: 06:00–17:59 day; 18:00–23:59 night; 00:00–05:59 counts as the previous date's night.
 function defaultShift(){
@@ -383,7 +561,7 @@ function defaultShift(){
 }
 
 /* ---------- storage on this phone ---------- */
-const blank = () => ({v:1, entries:{}, shifts:{}, routes:{}, meta:{device:"", lastExport:0}});
+const blank = () => ({v:1, entries:{}, shifts:{}, routes:{}, meta:{device:"", lastExport:0, lang:""}});
 let store = blank();
 let canSave = true;
 
@@ -405,15 +583,14 @@ function persist(){
   catch(e){
     canSave=false;
     const full = e && (e.name==="QuotaExceededError" || e.code===22 || e.code===1014);
-    banner(full ? "This phone's space for the app is full. Go to Send, save the old month's Excel, then remove that month."
-                : "Could not save on this phone. Download the file and open it with Chrome.", true);
+    banner(t(full ? "ban.full" : "ban.fail"), true);
     return false;
   }
 }
 
 const S = { ...defaultShift(), routeFilter:"all", editingId:null, pump:null, fleet:{}, busRoute:{} };
 
-function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("show"),2800); }
+function toast(msg){ const el=$("#toast"); el.textContent=msg; el.classList.add("show"); clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.remove("show"),2800); }
 function banner(msg,bad){ const b=$("#banner"); if(!msg){ b.hidden=true; return; } b.textContent=msg; b.classList.toggle("bad",!!bad); b.hidden=false; }
 
 /* ---------- data helpers ---------- */
@@ -428,10 +605,10 @@ function sortKey(e){
 function shiftEntries(d=S.date, s=S.shift){ return active().filter(e=>e.date===d && e.shift===s).sort((a,b)=>sortKey(a)-sortKey(b)); }
 function routeNames(){ return Object.values(store.routes).filter(r=>r && !r.deleted).map(r=>r.name).sort((a,b)=>a.localeCompare(b)); }
 function derive(){
-  const f={}, r={}, t={};
+  const f={}, r={}, tm={};
   for(const e of active()){
     if(!e.bus) continue; const u=e.updatedAt||0;
-    if(!(e.bus in t) || u>=t[e.bus]){ t[e.bus]=u; if(e.driver) f[e.bus]=e.driver; if(e.route) r[e.bus]=e.route; }
+    if(!(e.bus in tm) || u>=tm[e.bus]){ tm[e.bus]=u; if(e.driver) f[e.bus]=e.driver; if(e.route) r[e.bus]=e.route; }
   }
   S.fleet=f; S.busRoute=r;
 }
@@ -441,19 +618,43 @@ function totals(list){
   return {n:list.length, kg, km, wait: wn ? Math.round(w/wn) : null};
 }
 function byRoute(list){
-  const m=new Map();
-  list.forEach(e=>{ const k=e.route||"No route"; const o=m.get(k)||{route:k,n:0,kg:0,km:0}; o.n++; o.kg+=e.kg||0; o.km+=e.km||0; m.set(k,o); });
-  return [...m.values()].sort((a,b)=> (a.route==="No route")-(b.route==="No route") || b.kg-a.kg);
+  const m=new Map(), none=t("log.noroute");
+  list.forEach(e=>{ const k=e.route||none; const o=m.get(k)||{route:k,n:0,kg:0,km:0,none:!e.route}; o.n++; o.kg+=e.kg||0; o.km+=e.km||0; m.set(k,o); });
+  return [...m.values()].sort((a,b)=> a.none-b.none || b.kg-a.kg);
 }
-function recon(d=S.date, s=S.shift){
-  const doc=store.shifts[skey(d,s)]||{};
-  const list=shiftEntries(d,s);
+function loggedByPump(list){
   const logged={"1":0,"2":0,"3":0,"4":0,none:0};
   list.forEach(e=>{ const k=e.pump&&logged[e.pump]!=null ? e.pump : "none"; logged[k]+=e.kg||0; });
-  const m2 = doc.p2o!=null && doc.p2c!=null ? doc.p2c-doc.p2o : null;
-  const m3 = doc.p3o!=null && doc.p3c!=null ? doc.p3c-doc.p3o : null;
-  return {doc, logged, m2, m3};
+  return logged;
 }
+function meters(doc){
+  const m={}; PUMPS.forEach(p=>{ const o=doc["p"+p+"o"], c=doc["p"+p+"c"]; m[p] = o!=null && c!=null ? c-o : null; }); return m;
+}
+// Closing reading from the shift before this one, used to suggest the opening.
+function previousClosing(d,s,p){
+  const k="p"+p+"c";
+  if(s==="night"){ const v=(store.shifts[skey(d,"day")]||{})[k]; if(v!=null) return v; }
+  const y=new Date(d+"T12:00:00"); y.setDate(y.getDate()-1); const pd=ymd(y);
+  const n=(store.shifts[skey(pd,"night")]||{})[k]; if(n!=null) return n;
+  if(s==="day"){ const dd=(store.shifts[skey(pd,"day")]||{})[k]; if(dd!=null) return dd; }
+  return null;
+}
+
+/* ---------- language ---------- */
+function applyLang(){
+  document.documentElement.lang = LANG;
+  $$("[data-i18n]").forEach(el=>el.textContent=t(el.dataset.i18n, el.dataset.n?{n:el.dataset.n}:null));
+  $$("[data-i18n-html]").forEach(el=>el.innerHTML=t(el.dataset.i18nHtml));
+  $$("[data-i18n-ph]").forEach(el=>el.placeholder=t(el.dataset.i18nPh));
+  $$("[data-i18n-aria]").forEach(el=>el.setAttribute("aria-label",t(el.dataset.i18nAria)));
+  $("#langBtn").textContent=t("lang.other"); $("#langBtn").setAttribute("aria-label",t("lang.otherName"));
+  $$(".langpick button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.lang===LANG)));
+  formTitle(); renderAll(); renderCalc();
+  if(window.pwaRelang) window.pwaRelang();
+}
+function setLang(l){ LANG = l==="sw" ? "sw" : "en"; store.meta.lang=LANG; persist(); applyLang(); }
+$("#langBtn").addEventListener("click",()=>setLang(LANG==="en"?"sw":"en"));
+$$(".langpick button").forEach(b=>b.addEventListener("click",()=>setLang(b.dataset.lang)));
 
 /* ---------- shift selector ---------- */
 $("#date").value=S.date;
@@ -465,17 +666,17 @@ $("#month").value=S.date.slice(0,7);
 
 /* ---------- tabs ---------- */
 $$("nav.tabs button").forEach(b=>b.addEventListener("click",()=>showTab(b.dataset.tab)));
-function showTab(t){
-  $$("nav.tabs button").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.tab===t)));
-  ["add","log","route","read","send"].forEach(k=>$("#v-"+k).hidden = k!==t);
-  if(t==="send") renderSend();
+function showTab(tab){
+  $$("nav.tabs button").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.tab===tab)));
+  ["add","log","route","read","send"].forEach(k=>$("#v-"+k).hidden = k!==tab);
+  if(tab==="send") renderSend();
   window.scrollTo(0,0);
 }
 
 /* ---------- welcome ---------- */
 $("#wSave").addEventListener("click",()=>{
   const n=$("#wName").value.trim(); if(!n){ $("#wName").focus(); return; }
-  store.meta.device=n; persist(); $("#welcome").hidden=true; renderSend(); fillReadings(); toast("Welcome, "+n);
+  store.meta.device=n; store.meta.lang=LANG; persist(); $("#welcome").hidden=true; renderSend(); fillReadings(); toast(t("welcome.toast",{n}));
 });
 
 /* ---------- add / edit form ---------- */
@@ -492,14 +693,17 @@ $("#bus").addEventListener("change",()=>{
 function checkTimes(){
   const w=[];
   const wait=diff($("#arrival").value,$("#tin").value), fill=diff($("#tin").value,$("#tout").value);
-  if(wait!=null && wait>240) w.push("Check times: waiting "+wait+" min before the pump.");
-  if(fill!=null && fill>120) w.push("Check times: "+fill+" min at the pump.");
+  if(wait!=null && wait>240) w.push(t("warn.wait",{m:wait}));
+  if(fill!=null && fill>120) w.push(t("warn.fill",{m:fill}));
   $("#formWarn").textContent=w.join(" ");
 }
-
+function formTitle(){
+  const e=S.editingId && store.entries[S.editingId];
+  $("#formTitle").textContent = e ? t("form.edit",{bus:e.bus}) : t("form.add");
+  $("#saveBtn").textContent = t(e ? "save.changes" : "save.bus");
+}
 function resetForm(){
-  $("#form").reset(); S.editingId=null; S.pump=null; paintPump();
-  $("#formTitle").textContent="Add a bus"; $("#saveBtn").textContent="Save bus";
+  $("#form").reset(); S.editingId=null; S.pump=null; paintPump(); formTitle();
   $("#cancelEdit").hidden=true; $("#deleteBtn").hidden=true; $("#formWarn").textContent="";
 }
 $("#cancelEdit").addEventListener("click",()=>{ resetForm(); renderOpen(); });
@@ -511,23 +715,22 @@ function loadForEdit(e){
   $("#arrival").value=e.arrival||""; $("#tin").value=e.pumpIn||""; $("#tout").value=e.pumpOut||"";
   ensureRouteOption(e.route); $("#route").value=e.route||"";
   $("#kg").value=e.kg??""; $("#km").value=e.km??""; S.pump=e.pump||null; paintPump();
-  $("#formTitle").textContent="Edit "+e.bus; $("#saveBtn").textContent="Save changes";
-  $("#cancelEdit").hidden=false; $("#deleteBtn").hidden=false;
+  formTitle(); $("#cancelEdit").hidden=false; $("#deleteBtn").hidden=false;
   checkTimes(); showTab("add"); renderOpen();
 }
 
 $("#form").addEventListener("submit",ev=>{
   ev.preventDefault();
   const bus=normBus($("#bus").value);
-  if(!bus){ $("#formWarn").textContent="Type the bus number."; $("#bus").focus(); return; }
+  if(!bus){ $("#formWarn").textContent=t("warn.bus"); $("#bus").focus(); return; }
   const kgRaw=$("#kg").value, kmRaw=$("#km").value;
   const kg=num(kgRaw), km=num(kmRaw);
-  if((kgRaw!=="" && (kg==null || kg<0)) || (kmRaw!=="" && (km==null || km<0))){ $("#formWarn").textContent="KG and KM must be numbers, 0 or more."; return; }
-  if(kg!=null && kg>300 && !confirm(kg+" kg is a lot for one bus. Save anyway?")) return;
+  if((kgRaw!=="" && (kg==null || kg<0)) || (kmRaw!=="" && (km==null || km<0))){ $("#formWarn").textContent=t("warn.nums"); return; }
+  if(kg!=null && kg>300 && !confirm(t("confirm.bigkg",{kg}))) return;
   const prev = S.editingId ? store.entries[S.editingId] : null;
   if(!prev){
     const dup = shiftEntries().find(e=>e.bus===bus);
-    if(dup && !confirm(bus+" is already in this shift"+(dup.arrival?" (arrived "+dup.arrival+")":"")+". Save another fill?")) return;
+    if(dup && !confirm(t("confirm.dup",{bus, arr: dup.arrival ? t("confirm.dup.arr",{t:dup.arrival}) : ""}))) return;
   }
   const now=Date.now();
   const e = {
@@ -543,15 +746,79 @@ $("#form").addEventListener("submit",ev=>{
   store.entries[e.id]=e;
   const ok=persist();
   resetForm(); renderAll();
-  if(ok) toast((prev?"Updated ":"Saved ")+bus);
+  if(ok) toast(t(prev ? "toast.updated" : "toast.saved",{bus}));
   window.scrollTo(0,0);
 });
 
 $("#deleteBtn").addEventListener("click",()=>{
   const e=store.entries[S.editingId]; if(!e) return;
-  if(!confirm("Delete "+e.bus+" from this shift?")) return;
+  if(!confirm(t("confirm.del",{bus:e.bus}))) return;
   store.entries[e.id]={...e, deleted:true, updatedAt:Date.now()};
-  persist(); resetForm(); renderAll(); toast("Deleted "+e.bus);
+  persist(); resetForm(); renderAll(); toast(t("toast.deleted",{bus:e.bus}));
+});
+
+/* ---------- KG calculator ---------- */
+const CALC = {ex:""};
+const OPS = "+−×÷";
+function calcValue(src){
+  const s=src.replace(/[+−×÷]+$/,""); if(!s) return null;
+  const tk=s.match(/\d+\.?\d*|\.\d+|[+−×÷]/g); if(!tk || tk.join("")!==s) return null;
+  const nums=[], ops=[]; let want=true, neg=false;
+  for(const x of tk){
+    if(OPS.includes(x)){
+      if(want){ if(x==="−"){ neg=!neg; continue; } if(x==="+") continue; return null; }
+      ops.push(x); want=true;
+    } else { let v=parseFloat(x); if(neg) v=-v; neg=false; nums.push(v); want=false; }
+  }
+  if(!nums.length) return null;
+  const vals=[nums[0]], add=[];
+  for(let i=0;i<ops.length;i++){
+    const op=ops[i], b=nums[i+1];
+    if(op==="×") vals[vals.length-1]*=b;
+    else if(op==="÷"){ if(b===0) return null; vals[vals.length-1]/=b; }
+    else { add.push(op); vals.push(b); }
+  }
+  let r=vals[0]; add.forEach((op,i)=>{ r = op==="+" ? r+vals[i+1] : r-vals[i+1]; });
+  return isFinite(r) ? Math.round(r*1e6)/1e6 : null;
+}
+function renderCalc(){
+  const v=calcValue(CALC.ex);
+  $("#cEx").textContent=CALC.ex || " ";
+  $("#cRes").textContent= v==null ? (CALC.ex?"…":"0") : fmt(v);
+  const ok = v!=null && v>=0;
+  $("#cUse").disabled=!ok;
+  $("#cUse").textContent=t("calc.use",{v: ok ? r2(v) : "–"});
+}
+function calcKey(k){
+  let ex=CALC.ex;
+  if(k==="C") ex="";
+  else if(k==="B") ex=ex.slice(0,-1);
+  else if(k==="="){ const v=calcValue(ex); if(v!=null) ex=String(r2(v)); }
+  else if(OPS.includes(k)){
+    if(!ex){ if(k==="−") ex="−"; }
+    else if(OPS.includes(ex.slice(-1))) ex = ex.length===1 ? (k==="−"?"−":"") : ex.slice(0,-1)+k;
+    else ex+=k;
+  }
+  else if(k==="."){ const last=ex.split(/[+−×÷]/).pop(); if(!last.includes(".")) ex += last==="" ? "0." : "."; }
+  else { if(ex.replace(/[+−×÷]/g,"").length<24) ex+=k; }
+  CALC.ex=ex; renderCalc();
+}
+function openCalc(){
+  const cur=$("#kg").value; CALC.ex = cur && num(cur)!=null ? String(num(cur)) : "";
+  renderCalc(); $("#calc").hidden=false; document.body.style.overflow="hidden";
+}
+function closeCalc(){ $("#calc").hidden=true; document.body.style.overflow=""; $("#calcOpen").focus(); }
+$("#calcOpen").addEventListener("click",openCalc);
+$("#keys").addEventListener("click",e=>{ const b=e.target.closest("button[data-k]"); if(b) calcKey(b.dataset.k); });
+$("#cUse").addEventListener("click",()=>{ const v=calcValue(CALC.ex); if(v==null||v<0) return; $("#kg").value=r2(v); closeCalc(); });
+$("#cClose").addEventListener("click",closeCalc);
+$("#calc").addEventListener("click",e=>{ if(e.target.id==="calc") closeCalc(); });
+document.addEventListener("keydown",e=>{
+  if($("#calc").hidden) return;
+  if(e.key==="Escape") return closeCalc();
+  const map={"*":"×","/":"÷","-":"−","+":"+","Enter":"=","=":"=","Backspace":"B",".":".",",":"."};
+  const k = /^\d$/.test(e.key) ? e.key : map[e.key];
+  if(k){ e.preventDefault(); calcKey(k); }
 });
 
 /* ---------- routes ---------- */
@@ -564,53 +831,72 @@ $("#newRoute").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDef
 function addRoute(){
   const name=$("#newRoute").value.replace(/\s+/g," ").trim(); if(!name) return;
   const k=name.toLowerCase();
-  if(store.routes[k] && !store.routes[k].deleted){ toast("Route already listed"); return; }
+  if(store.routes[k] && !store.routes[k].deleted){ toast(t("toast.routeexists")); return; }
   store.routes[k]={name, updatedAt:Date.now()}; persist();
-  $("#newRoute").value=""; renderRoutes(); renderRouteSelect(); toast("Added "+name);
+  $("#newRoute").value=""; renderRoutes(); renderRouteSelect(); toast(t("toast.routeadded",{r:name}));
 }
 $("#routeList").addEventListener("click",e=>{
   const b=e.target.closest("button[data-route]"); if(!b) return;
   const r=store.routes[b.dataset.route]; if(!r) return;
-  if(!confirm("Remove route \""+r.name+"\" from the list? Buses already saved keep it.")) return;
+  if(!confirm(t("confirm.routedel",{r:r.name}))) return;
   store.routes[b.dataset.route]={...r, deleted:true, updatedAt:Date.now()}; persist(); renderRoutes(); renderRouteSelect();
 });
 
-/* ---------- readings ---------- */
+/* ---------- readings (pumps 1 to 4) ---------- */
+$("#pumpInputs").innerHTML = PUMPS.map(p=>`<div class="pumpread">
+  <h3 data-i18n="read.pump" data-n="${p}"></h3>
+  <div class="grid2">
+    <div class="field"><label for="p${p}o" data-i18n="read.open"></label><input id="p${p}o" type="number" inputmode="decimal" step="0.01"></div>
+    <div class="field"><label for="p${p}c" data-i18n="read.close"></label><input id="p${p}c" type="number" inputmode="decimal" step="0.01"></div>
+  </div>
+  <p class="filled" id="f${p}"></p>
+</div>`).join("");
 function fillReadings(){
-  const d=store.shifts[skey(S.date,S.shift)]||{};
-  ["p2o","p3o","p2c","p3c"].forEach(k=>$("#"+k).value = d[k]??"");
+  const saved=store.shifts[skey(S.date,S.shift)], d=saved||{};
+  let pre=false;
+  PUMPS.forEach(p=>{
+    const o=$("#p"+p+"o"), c=$("#p"+p+"c");
+    o.classList.remove("pre");
+    o.value = d["p"+p+"o"] ?? ""; c.value = d["p"+p+"c"] ?? "";
+    if(!saved){ const pc=previousClosing(S.date,S.shift,p); if(pc!=null){ o.value=pc; o.classList.add("pre"); pre=true; } }
+  });
+  $("#preHint").hidden=!pre;
   $("#att").value = d.att || store.meta.device || "";
   $("#notes").value = d.notes || "";
   renderRecon();
 }
-$("#rform").addEventListener("input",renderRecon);
+$("#rform").addEventListener("input",e=>{ if(e.target.classList) e.target.classList.remove("pre"); renderRecon(); });
 $("#rform").addEventListener("submit",ev=>{
   ev.preventDefault();
-  const doc={ p2o:num($("#p2o").value), p3o:num($("#p3o").value), p2c:num($("#p2c").value), p3c:num($("#p3c").value),
-    att:$("#att").value.trim(), notes:$("#notes").value.trim(), by:store.meta.device||"", updatedAt:Date.now() };
+  const doc={ att:$("#att").value.trim(), notes:$("#notes").value.trim(), by:store.meta.device||"", updatedAt:Date.now() };
+  PUMPS.forEach(p=>{ doc["p"+p+"o"]=num($("#p"+p+"o").value); doc["p"+p+"c"]=num($("#p"+p+"c").value); });
   store.shifts[skey(S.date,S.shift)]=doc;
-  if(persist()) toast("Readings saved");
+  $$("#pumpInputs input").forEach(i=>i.classList.remove("pre")); $("#preHint").hidden=true;
+  if(persist()) toast(t("toast.readsaved"));
   renderRecon();
 });
 function renderRecon(){
   // live values from the form, so the check updates while typing
   const v=id=>num($("#"+id).value);
-  const m2 = v("p2o")!=null && v("p2c")!=null ? v("p2c")-v("p2o") : null;
-  const m3 = v("p3o")!=null && v("p3c")!=null ? v("p3c")-v("p3o") : null;
-  const {logged}=recon();
-  const row=(label,meter,log)=>{
-    if(meter==null) return `<p><span>${label}</span><span>logged ${fmt(log)} kg</span></p>`;
-    const d=r2(meter-log); const big=Math.abs(d)>Math.max(5,Math.abs(meter)*0.02);
-    return `<p><span>${label}: meter ${fmt(meter)} kg, logged ${fmt(log)} kg</span><span class="${big?"off":"good"}">${d>0?"+":""}${fmt(d)}</span></p>`;
-  };
-  let h=row("Pump 2",m2,logged["2"])+row("Pump 3",m3,logged["3"]);
-  if(logged["1"]||logged["4"]) h+=`<p><span>Pumps 1 and 4 (no meter here)</span><span>${fmt(logged["1"]+logged["4"])} kg</span></p>`;
-  if(logged.none) h+=`<p><span>No pump chosen</span><span>${fmt(logged.none)} kg</span></p>`;
+  const logged=loggedByPump(shiftEntries());
+  let h="", mSum=0, lSum=0, any=false;
+  PUMPS.forEach(p=>{
+    const o=v("p"+p+"o"), c=v("p"+p+"c"), m = o!=null && c!=null ? c-o : null, l=logged[p];
+    $("#f"+p).textContent = m!=null ? t("read.filled",{v:fmt(m)}) : "";
+    if(m!=null){
+      any=true; mSum+=m; lSum+=l;
+      const d=r2(m-l), big=Math.abs(d)>Math.max(5,Math.abs(m)*0.02);
+      h+=`<p><span>${esc(t("recon.meter",{n:p,m:fmt(m),l:fmt(l)}))}</span><span class="${big?"off":"good"}">${d>0?"+":""}${fmt(d)}</span></p>`;
+    } else if(l){ h+=`<p><span>${esc(t("recon.logged",{n:p,l:fmt(l)}))}</span></p>`; }
+  });
+  if(logged.none) h+=`<p><span>${esc(t("recon.nopump"))}</span><span>${fmt(logged.none)} kg</span></p>`;
+  if(any){ const tl=lSum+logged.none+PUMPS.filter(p=>v("p"+p+"o")==null||v("p"+p+"c")==null).reduce((a,p)=>a+logged[p],0);
+    const d=r2(mSum-tl); h+=`<p class="sum"><span>${esc(t("recon.total",{m:fmt(mSum),l:fmt(tl)}))}</span><span>${d>0?"+":""}${fmt(d)}</span></p>`; }
   $("#recon").innerHTML = h;
 }
 
 /* ---------- rendering ---------- */
-function renderTally(){ const t=totals(shiftEntries()); $("#tally").textContent=t.n+" bus"+(t.n===1?"":"es")+" · "+fmt(t.kg)+" kg"; }
+function renderTally(){ const tt=totals(shiftEntries()); $("#tally").textContent=busesLabel(tt.n)+" · "+fmt(tt.kg)+" kg"; }
 function renderLists(){
   const buses=[...new Set(active().map(e=>e.bus).filter(Boolean))].sort();
   const drivers=[...new Set(active().map(e=>e.driver).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
@@ -619,7 +905,7 @@ function renderLists(){
 }
 function renderRouteSelect(){
   const sel=$("#route"), cur=sel.value, names=routeNames();
-  sel.innerHTML=`<option value="">Choose route</option>`+names.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join("");
+  sel.innerHTML=`<option value="">${esc(t("f.route.choose"))}</option>`+names.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join("");
   if(cur){ ensureRouteOption(cur); sel.value=cur; }
   $("#routeHint").hidden = names.length>0;
 }
@@ -632,20 +918,20 @@ $("#openChips").addEventListener("click",e=>{ const b=e.target.closest("button[d
 
 function renderLog(){
   const all=shiftEntries();
-  const t=totals(all);
-  $("#sBuses").textContent=t.n; $("#sKg").textContent=fmt(t.kg); $("#sWait").textContent=t.wait==null?"–":t.wait;
-  const routes=[...new Set(all.map(e=>e.route||"No route"))];
+  const tt=totals(all), none=t("log.noroute");
+  $("#sBuses").textContent=tt.n; $("#sKg").textContent=fmt(tt.kg); $("#sWait").textContent=tt.wait==null?"–":tt.wait;
+  const routes=[...new Set(all.map(e=>e.route||none))];
   if(S.routeFilter!=="all" && !routes.includes(S.routeFilter)) S.routeFilter="all";
   $("#logFilter").hidden = routes.length<2;
-  $("#logFilter").innerHTML=[["all","All"],...routes.map(r=>[r,r])].map(([v,l])=>`<button type="button" data-f="${esc(v)}" aria-pressed="${S.routeFilter===v}">${esc(l)}</button>`).join("");
-  const list = S.routeFilter==="all" ? all : all.filter(e=>(e.route||"No route")===S.routeFilter);
-  if(!list.length){ $("#list").innerHTML=`<div class="empty">No buses in this ${shiftLabel(S.shift).toLowerCase()} shift yet.</div>`; return; }
+  $("#logFilter").innerHTML=[["all",t("log.all")],...routes.map(r=>[r,r])].map(([v,l])=>`<button type="button" data-f="${esc(v)}" aria-pressed="${S.routeFilter===v}">${esc(l)}</button>`).join("");
+  const list = S.routeFilter==="all" ? all : all.filter(e=>(e.route||none)===S.routeFilter);
+  if(!list.length){ $("#list").innerHTML=`<div class="empty">${esc(t("log.empty",{shift:t(S.shift==="night"?"shift.night.l":"shift.day.l")}))}</div>`; return; }
   $("#list").innerHTML=list.map(e=>{
-    const tm=[e.arrival&&("Arr "+e.arrival), e.pumpIn&&("In "+e.pumpIn), e.pumpOut&&("Out "+e.pumpOut), e.pump&&("P"+e.pump)].filter(Boolean).join(" · ")||"No times";
+    const tm=[e.arrival&&(t("log.arr")+" "+e.arrival), e.pumpIn&&(t("log.in")+" "+e.pumpIn), e.pumpOut&&(t("log.out")+" "+e.pumpOut), e.pump&&("P"+e.pump)].filter(Boolean).join(" · ")||t("log.notimes");
     const unfinished=!e.pumpOut;
     return `<button type="button" class="entry${unfinished?" unfinished":""}" data-id="${esc(e.id)}">
       <span class="bus">${esc(e.bus)}</span>
-      <span class="who">${esc(e.driver||"No driver")}${unfinished?'<span class="tag">not finished</span>':""}</span>
+      <span class="who">${esc(e.driver||t("log.nodriver"))}${unfinished?`<span class="tag">${esc(t("log.unfinished"))}</span>`:""}</span>
       <span class="kg">${e.kg!=null?fmt(e.kg)+" kg":"– kg"}</span>
       <span class="times">${esc(tm)}</span>
       <span class="km">${e.km!=null?fmt(e.km)+" km":""}</span>
@@ -657,28 +943,27 @@ $("#logFilter").addEventListener("click",e=>{ const b=e.target.closest("button[d
 $("#list").addEventListener("click",e=>{ const b=e.target.closest("button[data-id]"); if(b && store.entries[b.dataset.id]) loadForEdit(store.entries[b.dataset.id]); });
 
 function renderRoutes(){
-  const all=shiftEntries(), rows=byRoute(all), t=totals(all);
-  $("#routeSum").innerHTML = rows.length ? `<table><thead><tr><th>Route</th><th>Buses</th><th>KG</th><th>KM</th></tr></thead><tbody>${
+  const all=shiftEntries(), rows=byRoute(all), tt=totals(all);
+  $("#routeSum").innerHTML = rows.length ? `<table><thead><tr><th>${esc(t("th.route"))}</th><th>${esc(t("th.buses"))}</th><th>KG</th><th>KM</th></tr></thead><tbody>${
     rows.map(r=>`<tr><td>${esc(r.route)}</td><td>${r.n}</td><td>${fmt(r.kg)}</td><td>${fmt(r.km)}</td></tr>`).join("")
-  }<tr class="tot"><td>Total</td><td>${t.n}</td><td>${fmt(t.kg)}</td><td>${fmt(t.km)}</td></tr></tbody></table>` : `<p class="small">No buses in this shift yet.</p>`;
+  }<tr class="tot"><td>${esc(t("total"))}</td><td>${tt.n}</td><td>${fmt(tt.kg)}</td><td>${fmt(tt.km)}</td></tr></tbody></table>` : `<p class="small">${esc(t("route.none"))}</p>`;
   const counts={}; active().forEach(e=>{ if(e.route) counts[e.route]=(counts[e.route]||0)+1; });
   const items=Object.entries(store.routes).filter(([,r])=>r && !r.deleted).sort((a,b)=>a[1].name.localeCompare(b[1].name));
-  $("#routeList").innerHTML = items.length ? items.map(([k,r])=>`<li><div><div class="rn">${esc(r.name)}</div><div class="rc">${counts[r.name]||0} fills saved</div></div><button type="button" class="x" data-route="${esc(k)}">Remove</button></li>`).join("")
-    : `<li class="small">No routes yet. Type one above and tap Add.</li>`;
+  $("#routeList").innerHTML = items.length ? items.map(([k,r])=>`<li><div><div class="rn">${esc(r.name)}</div><div class="rc">${esc(t("route.fills",{n:counts[r.name]||0}))}</div></div><button type="button" class="x" data-route="${esc(k)}">${esc(t("route.remove"))}</button></li>`).join("")
+    : `<li class="small">${esc(t("route.empty"))}</li>`;
 }
 
 function renderSend(){
   $("#devName").value = store.meta.device || "";
   const used=(()=>{ try{ return JSON.stringify(store).length; }catch(e){ return 0; } })();
   const pct=Math.min(100, used/LIMIT*100);
-  const n=active().length;
-  $("#storeInfo").textContent = n+" bus fills saved on this phone · about "+Math.max(1,Math.round(pct))+"% of the space used";
+  $("#storeInfo").textContent = t("store.info",{n:active().length, p:Math.max(1,Math.round(pct))});
   $("#meterBar").style.width=pct.toFixed(1)+"%"; $("#meter").classList.toggle("full", pct>70);
   const le=store.meta.lastExport;
-  $("#lastSave").textContent = le ? "Last Excel or backup made: "+dmy(ymd(new Date(le)))+" at "+hm(new Date(le)) : "No Excel or backup made yet.";
+  $("#lastSave").textContent = le ? t("last.save",{d:dmy(ymd(new Date(le))), t:hm(new Date(le))}) : t("last.none");
   if(!$("#delMonth").value){ const d=new Date(); d.setMonth(d.getMonth()-2); $("#delMonth").value=ymd(d).slice(0,7); }
 }
-$("#devName").addEventListener("change",()=>{ store.meta.device=$("#devName").value.trim(); persist(); toast("Name saved"); });
+$("#devName").addEventListener("change",()=>{ store.meta.device=$("#devName").value.trim(); persist(); toast(t("name.saved")); });
 
 function renderAll(shiftChanged){
   derive(); renderTally(); renderLists(); renderRouteSelect(); renderOpen(); renderLog(); renderRoutes();
@@ -686,67 +971,7 @@ function renderAll(shiftChanged){
   if(!$("#v-send").hidden) renderSend();
 }
 
-/* ---------- Excel ---------- */
-const xT = t => { const m=mins(t); return m==null ? null : {t:"n", v:m/1440, z:"hh:mm"}; };
-const xD = s => { const [y,m,d]=s.split("-").map(Number); return {t:"n", v:(Date.UTC(y,m-1,d)-Date.UTC(1899,11,30))/864e5, z:"dd/mm/yyyy"}; };
-const xN = (n,z) => n==null ? null : {t:"n", v:r2(n), z:z||"#,##0.00"};
-const xI = n => n==null ? null : {t:"n", v:n, z:"0"};
-function sheet(rows, widths, merges){
-  const ws={}; let maxC=0;
-  rows.forEach((row,R)=>(row||[]).forEach((c,C)=>{
-    if(c==null || c==="") return;
-    const o = typeof c==="object" ? c : (typeof c==="number" ? {t:"n",v:c} : {t:"s",v:String(c)});
-    ws[XLSX.utils.encode_cell({r:R,c:C})]=o; if(C>maxC) maxC=C;
-  }));
-  ws["!ref"]=XLSX.utils.encode_range({s:{r:0,c:0},e:{r:Math.max(rows.length-1,0),c:Math.max(maxC,widths?widths.length-1:0)}});
-  if(widths) ws["!cols"]=widths.map(w=>({wch:w}));
-  if(merges) ws["!merges"]=merges;
-  return ws;
-}
-function shiftSheet(d,s){
-  const list=shiftEntries(d,s), {doc,logged,m2,m3}=recon(d,s), t=totals(list);
-  const rows=[
-    ["CNG FUEL LOG – "+shiftLabel(s).toUpperCase()+" SHIFT"],
-    ["Date", xD(d), "", "Attendant", doc.att||""],
-    ["", "Opening", "Closing", "Dispensed (kg)"],
-    ["Pump No 2", xN(doc.p2o), xN(doc.p2c), xN(m2)],
-    ["Pump No 3", xN(doc.p3o), xN(doc.p3c), xN(m3)],
-    ["Notes", doc.notes||""],
-    [],
-    ["S/N","Bus No","Driver","Route","Arrival","Pump In","Pump Out","Wait (min)","Fill (min)","Pump","KG","KM"]
-  ];
-  list.forEach((e,i)=>rows.push([i+1, e.bus, e.driver||"", e.route||"", xT(e.arrival), xT(e.pumpIn), xT(e.pumpOut),
-    xI(diff(e.arrival,e.pumpIn)), xI(diff(e.pumpIn,e.pumpOut)), e.pump?Number(e.pump):null, xN(e.kg), xN(e.km,"#,##0.0")]));
-  rows.push(["", "TOTAL", t.n+" buses", "", "", "", "", t.wait!=null?{t:"n",v:t.wait,z:"0"}:null, "", "", xN(t.kg), xN(t.km,"#,##0.0")]);
-  rows.push([], ["TOTALS BY ROUTE"], ["Route","Buses","KG","KM","Avg KG per bus"]);
-  byRoute(list).forEach(r=>rows.push([r.route, r.n, xN(r.kg), xN(r.km,"#,##0.0"), xN(r.n?r.kg/r.n:null)]));
-  rows.push([], ["CHECK: METER vs LOG"], ["Pump","Meter (kg)","Logged (kg)","Difference"]);
-  rows.push(["Pump No 2", xN(m2), xN(logged["2"]), m2!=null?xN(m2-logged["2"]):null]);
-  rows.push(["Pump No 3", xN(m3), xN(logged["3"]), m3!=null?xN(m3-logged["3"]):null]);
-  if(logged["1"]||logged["4"]) rows.push(["Pumps 1 & 4", null, xN(logged["1"]+logged["4"])]);
-  if(logged.none) rows.push(["No pump chosen", null, xN(logged.none)]);
-  return sheet(rows,[16,12,18,22,9,9,9,10,9,6,10,10],[{s:{r:0,c:0},e:{r:0,c:5}}]);
-}
-function summarySheet(keys, title){
-  const rows=[[title], [], ["Date","Shift","Attendant","Buses","KG logged","KM","Avg wait (min)","Pump 2 meter","Pump 3 meter","Logged on P2+P3","Difference"]];
-  let T={n:0,kg:0,km:0};
-  keys.forEach(([d,s])=>{
-    const list=shiftEntries(d,s), t=totals(list), {doc,logged,m2,m3}=recon(d,s);
-    const meter = (m2!=null||m3!=null) ? (m2||0)+(m3||0) : null, onMeter=logged["2"]+logged["3"];
-    rows.push([xD(d), shiftLabel(s), doc.att||"", t.n, xN(t.kg), xN(t.km,"#,##0.0"), t.wait!=null?{t:"n",v:t.wait,z:"0"}:null, xN(m2), xN(m3), xN(onMeter), meter!=null?xN(meter-onMeter):null]);
-    T.n+=t.n; T.kg+=t.kg; T.km+=t.km;
-  });
-  rows.push(["TOTAL", "", "", T.n, xN(T.kg), xN(T.km,"#,##0.0")]);
-  return sheet(rows,[12,7,16,7,11,11,10,12,12,14,11],[{s:{r:0,c:0},e:{r:0,c:5}}]);
-}
-function routesSheet(keys, title){
-  const list=[]; keys.forEach(([d,s])=>list.push(...shiftEntries(d,s)));
-  const rows=[[title+" – by route"], [], ["Route","Fills","KG","KM","Avg KG per fill","KG per 100 km"]];
-  byRoute(list).forEach(r=>rows.push([r.route, r.n, xN(r.kg), xN(r.km,"#,##0.0"), xN(r.n?r.kg/r.n:null), r.km?xN(r.kg/r.km*100):null]));
-  const t=totals(list); rows.push(["TOTAL", t.n, xN(t.kg), xN(t.km,"#,##0.0")]);
-  return sheet(rows,[26,7,11,11,14,13]);
-}
-// Hidden sheet with the raw data, so another phone can add this file to its log.
+/* ---------- data sent along inside every Excel file ---------- */
 function dataPayload(keys){
   const want=new Set(keys.map(([d,s])=>skey(d,s)));
   const entries={}, shifts={};
@@ -754,20 +979,203 @@ function dataPayload(keys){
   want.forEach(k=>{ if(store.shifts[k]) shifts[k]=store.shifts[k]; });
   return {app:APP, v:1, from:store.meta.device||"", at:Date.now(), entries, shifts, routes:store.routes};
 }
-function dataSheet(payload){
-  const s=JSON.stringify(payload), rows=[["CNG Fuel Log data – do not edit this sheet"]];
-  for(let i=0;i<s.length;i+=30000) rows.push([s.slice(i,i+30000)]);
-  return sheet(rows,[60]);
+
+/* ---------- Excel in the office master layout (OCTOBER_CNG_TEMPLATE_2026.xlsx) ----------
+   One sheet per date named DD.MM.YYYY. Day block, night block, GAS totals, then the pump check.
+   Styles, theme, column widths and label texts come from the template itself (TPL).
+   Weekdays have 70 rows per shift, Saturdays 57, Sundays 33 (as in the template); more rows are
+   added when more buses were logged. Pumps 1 and 4 are added under pumps 2 and 3 in the same style. */
+const TPL = {"styles": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\r\n<styleSheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:mc=\"http://schemas.openxmlformats.org/markup-compatibility/2006\" mc:Ignorable=\"x14ac x16r2 xr\" xmlns:x14ac=\"http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac\" xmlns:x16r2=\"http://schemas.microsoft.com/office/spreadsheetml/2015/02/main\" xmlns:xr=\"http://schemas.microsoft.com/office/spreadsheetml/2014/revision\"><numFmts count=\"3\"><numFmt numFmtId=\"164\" formatCode=\"hh:mm:ss;@\" /><numFmt numFmtId=\"166\" formatCode=\"#,##0.00&quot; KG&quot;\" /><numFmt numFmtId=\"167\" formatCode=\"#,##0.00&quot; TOTAL KG&quot;\" /><\/numFmts><fonts count=\"3\" x14ac:knownFonts=\"1\"><font><sz val=\"11\" /><color theme=\"1\" /><name val=\"Calibri\" /><family val=\"2\" /><charset val=\"1\" /><\/font><font><sz val=\"12\" /><color theme=\"1\" /><name val=\"Calibri\" /><family val=\"2\" /><charset val=\"1\" /><\/font><font><b /><sz val=\"11\" /><color theme=\"1\" /><name val=\"Calibri\" /><family val=\"2\" /><charset val=\"1\" /><\/font><\/fonts><fills count=\"8\"><fill><patternFill patternType=\"none\" /><\/fill><fill><patternFill patternType=\"gray125\" /><\/fill><fill><patternFill patternType=\"solid\"><fgColor theme=\"4\" tint=\"0.39988402966399123\" /><bgColor rgb=\"FFC0C0C0\" /><\/patternFill><\/fill><fill><patternFill patternType=\"solid\"><fgColor theme=\"7\" /><bgColor rgb=\"FFFF9900\" /><\/patternFill><\/fill><fill><patternFill patternType=\"solid\"><fgColor theme=\"9\" /><bgColor rgb=\"FF339966\" /><\/patternFill><\/fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FF00B0F0\" /><bgColor rgb=\"FF33CCCC\" /><\/patternFill><\/fill><fill><patternFill patternType=\"solid\"><fgColor theme=\"2\" /><bgColor rgb=\"FFFFFFFF\" /><\/patternFill><\/fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFFF00\" /><bgColor rgb=\"FFFFFF00\" /><\/patternFill><\/fill><\/fills><borders count=\"19\"><border><left /><right /><top /><bottom /><diagonal /><\/border><border><left style=\"thin\"><color auto=\"1\" /><\/left><right style=\"thin\"><color auto=\"1\" /><\/right><top style=\"thin\"><color auto=\"1\" /><\/top><bottom style=\"thin\"><color auto=\"1\" /><\/bottom><diagonal /><\/border><border><left style=\"thin\"><color auto=\"1\" /><\/left><right style=\"thin\"><color auto=\"1\" /><\/right><top /><bottom style=\"thin\"><color auto=\"1\" /><\/bottom><diagonal /><\/border><border><left style=\"thin\"><color auto=\"1\" /><\/left><right style=\"thin\"><color auto=\"1\" /><\/right><top style=\"thin\"><color auto=\"1\" /><\/top><bottom /><diagonal /><\/border><border><left style=\"thin\"><color auto=\"1\" /><\/left><right /><top style=\"thin\"><color auto=\"1\" /><\/top><bottom /><diagonal /><\/border><border><left style=\"medium\"><color auto=\"1\" /><\/left><right style=\"medium\"><color auto=\"1\" /><\/right><top style=\"medium\"><color auto=\"1\" /><\/top><bottom /><diagonal /><\/border><border><left style=\"medium\"><color auto=\"1\" /><\/left><right style=\"medium\"><color auto=\"1\" /><\/right><top style=\"medium\"><color auto=\"1\" /><\/top><bottom style=\"medium\"><color auto=\"1\" /><\/bottom><diagonal /><\/border><border><left style=\"medium\"><color auto=\"1\" /><\/left><right /><top style=\"medium\"><color auto=\"1\" /><\/top><bottom /><diagonal /><\/border><border><left /><right style=\"medium\"><color auto=\"1\" /><\/right><top style=\"medium\"><color auto=\"1\" /><\/top><bottom /><diagonal /><\/border><border><left style=\"medium\"><color auto=\"1\" /><\/left><right style=\"medium\"><color auto=\"1\" /><\/right><top /><bottom /><diagonal /><\/border><border><left style=\"medium\"><color auto=\"1\" /><\/left><right /><top /><bottom style=\"medium\"><color auto=\"1\" /><\/bottom><diagonal /><\/border><border><left /><right style=\"medium\"><color auto=\"1\" /><\/right><top /><bottom style=\"medium\"><color auto=\"1\" /><\/bottom><diagonal /><\/border><border><left /><right style=\"medium\"><color auto=\"1\" /><\/right><top /><bottom /><diagonal /><\/border><border><left /><right style=\"thin\"><color auto=\"1\" /><\/right><top style=\"thin\"><color auto=\"1\" /><\/top><bottom style=\"thin\"><color auto=\"1\" /><\/bottom><diagonal /><\/border><border><left /><right /><top style=\"thin\"><color auto=\"1\" /><\/top><bottom style=\"thin\"><color auto=\"1\" /><\/bottom><diagonal /><\/border><border><left /><right /><top style=\"medium\"><color auto=\"1\" /><\/top><bottom /><diagonal /><\/border><border><left /><right /><top /><bottom style=\"medium\"><color auto=\"1\" /><\/bottom><diagonal /><\/border><border><left /><right style=\"medium\"><color auto=\"1\" /><\/right><top style=\"medium\"><color auto=\"1\" /><\/top><bottom style=\"medium\"><color auto=\"1\" /><\/bottom><diagonal /><\/border><border><left /><right /><top style=\"medium\"><color auto=\"1\" /><\/top><bottom style=\"medium\"><color auto=\"1\" /><\/bottom><diagonal /><\/border><\/borders><cellStyleXfs count=\"1\"><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"0\" /><\/cellStyleXfs><cellXfs count=\"44\"><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"0\" xfId=\"0\" /><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"0\" xfId=\"0\" applyAlignment=\"1\"><alignment horizontal=\"right\" /><\/xf><xf numFmtId=\"0\" fontId=\"2\" fillId=\"2\" borderId=\"1\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" /><xf numFmtId=\"0\" fontId=\"2\" fillId=\"2\" borderId=\"1\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"right\" /><\/xf><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"1\" xfId=\"0\" applyBorder=\"1\" /><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"1\" xfId=\"0\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"right\" /><\/xf><xf numFmtId=\"164\" fontId=\"0\" fillId=\"0\" borderId=\"1\" xfId=\"0\" applyNumberFormat=\"1\" applyBorder=\"1\" /><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"2\" xfId=\"0\" applyBorder=\"1\" /><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"2\" xfId=\"0\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"right\" /><\/xf><xf numFmtId=\"164\" fontId=\"0\" fillId=\"0\" borderId=\"3\" xfId=\"0\" applyNumberFormat=\"1\" applyBorder=\"1\" /><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"3\" xfId=\"0\" applyBorder=\"1\" /><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"4\" xfId=\"0\" applyBorder=\"1\" /><xf numFmtId=\"0\" fontId=\"2\" fillId=\"0\" borderId=\"5\" xfId=\"0\" applyFont=\"1\" applyBorder=\"1\" /><xf numFmtId=\"0\" fontId=\"2\" fillId=\"0\" borderId=\"7\" xfId=\"0\" applyFont=\"1\" applyBorder=\"1\" /><xf numFmtId=\"0\" fontId=\"2\" fillId=\"0\" borderId=\"10\" xfId=\"0\" applyFont=\"1\" applyBorder=\"1\" /><xf numFmtId=\"4\" fontId=\"0\" fillId=\"6\" borderId=\"0\" xfId=\"0\" applyNumberFormat=\"1\" applyFill=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\" /><\/xf><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"8\" xfId=\"0\" applyBorder=\"1\" /><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"11\" xfId=\"0\" applyBorder=\"1\" /><xf numFmtId=\"4\" fontId=\"0\" fillId=\"6\" borderId=\"6\" xfId=\"0\" applyNumberFormat=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\" /><\/xf><xf numFmtId=\"4\" fontId=\"2\" fillId=\"6\" borderId=\"6\" xfId=\"0\" applyNumberFormat=\"1\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\" /><\/xf><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"0\" xfId=\"0\" /><xf numFmtId=\"0\" fontId=\"2\" fillId=\"0\" borderId=\"6\" xfId=\"0\" applyFont=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\" /><\/xf><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"17\" xfId=\"0\" applyBorder=\"1\" /><xf numFmtId=\"4\" fontId=\"2\" fillId=\"7\" borderId=\"6\" xfId=\"0\" applyNumberFormat=\"1\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\" /><\/xf><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"18\" xfId=\"0\" applyBorder=\"1\" /><xf numFmtId=\"0\" fontId=\"1\" fillId=\"0\" borderId=\"1\" xfId=\"0\" applyFont=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\" /><\/xf><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"14\" xfId=\"0\" applyBorder=\"1\" /><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"13\" xfId=\"0\" applyBorder=\"1\" /><xf numFmtId=\"0\" fontId=\"2\" fillId=\"5\" borderId=\"6\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\" /><\/xf><xf numFmtId=\"4\" fontId=\"0\" fillId=\"6\" borderId=\"6\" xfId=\"0\" applyNumberFormat=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\" /><\/xf><xf numFmtId=\"4\" fontId=\"2\" fillId=\"6\" borderId=\"6\" xfId=\"0\" applyNumberFormat=\"1\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\" /><\/xf><xf numFmtId=\"0\" fontId=\"2\" fillId=\"0\" borderId=\"9\" xfId=\"0\" applyFont=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\" /><\/xf><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"12\" xfId=\"0\" applyBorder=\"1\" /><xf numFmtId=\"4\" fontId=\"2\" fillId=\"5\" borderId=\"6\" xfId=\"0\" applyNumberFormat=\"1\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\" /><\/xf><xf numFmtId=\"0\" fontId=\"2\" fillId=\"0\" borderId=\"1\" xfId=\"0\" applyFont=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\" /><\/xf><xf numFmtId=\"167\" fontId=\"2\" fillId=\"4\" borderId=\"6\" xfId=\"0\" applyNumberFormat=\"1\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\" /><\/xf><xf numFmtId=\"166\" fontId=\"2\" fillId=\"3\" borderId=\"6\" xfId=\"0\" applyNumberFormat=\"1\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\" /><\/xf><xf numFmtId=\"0\" fontId=\"2\" fillId=\"4\" borderId=\"6\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\" /><\/xf><xf numFmtId=\"0\" fontId=\"2\" fillId=\"2\" borderId=\"6\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\" /><\/xf><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"15\" xfId=\"0\" applyBorder=\"1\" /><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"8\" xfId=\"0\" applyBorder=\"1\" /><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"10\" xfId=\"0\" applyBorder=\"1\" /><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"16\" xfId=\"0\" applyBorder=\"1\" /><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"11\" xfId=\"0\" applyBorder=\"1\" /><\/cellXfs><cellStyles count=\"1\"><cellStyle name=\"Normal\" xfId=\"0\" builtinId=\"0\" /><\/cellStyles><dxfs count=\"0\" /><tableStyles count=\"0\" defaultTableStyle=\"TableStyleMedium2\" defaultPivotStyle=\"PivotStyleLight16\" /><colors><indexedColors><rgbColor rgb=\"FF000000\" /><rgbColor rgb=\"FFFFFFFF\" /><rgbColor rgb=\"FFFF0000\" /><rgbColor rgb=\"FF00FF00\" /><rgbColor rgb=\"FF0000FF\" /><rgbColor rgb=\"FFFFFF00\" /><rgbColor rgb=\"FFFF00FF\" /><rgbColor rgb=\"FF00FFFF\" /><rgbColor rgb=\"FF800000\" /><rgbColor rgb=\"FF008000\" /><rgbColor rgb=\"FF000080\" /><rgbColor rgb=\"FF808000\" /><rgbColor rgb=\"FF800080\" /><rgbColor rgb=\"FF008080\" /><rgbColor rgb=\"FFC0C0C0\" /><rgbColor rgb=\"FF808080\" /><rgbColor rgb=\"FF9999FF\" /><rgbColor rgb=\"FF993366\" /><rgbColor rgb=\"FFE7E6E6\" /><rgbColor rgb=\"FFCCFFFF\" /><rgbColor rgb=\"FF660066\" /><rgbColor rgb=\"FFFF8080\" /><rgbColor rgb=\"FF0066CC\" /><rgbColor rgb=\"FFCCCCFF\" /><rgbColor rgb=\"FF000080\" /><rgbColor rgb=\"FFFF00FF\" /><rgbColor rgb=\"FFFFFF00\" /><rgbColor rgb=\"FF00FFFF\" /><rgbColor rgb=\"FF800080\" /><rgbColor rgb=\"FF800000\" /><rgbColor rgb=\"FF008080\" /><rgbColor rgb=\"FF0000FF\" /><rgbColor rgb=\"FF00B0F0\" /><rgbColor rgb=\"FFCCFFFF\" /><rgbColor rgb=\"FFCCFFCC\" /><rgbColor rgb=\"FFFFFF99\" /><rgbColor rgb=\"FF9DC3E6\" /><rgbColor rgb=\"FFFF99CC\" /><rgbColor rgb=\"FFCC99FF\" /><rgbColor rgb=\"FFFFCC99\" /><rgbColor rgb=\"FF3366FF\" /><rgbColor rgb=\"FF33CCCC\" /><rgbColor rgb=\"FF99CC00\" /><rgbColor rgb=\"FFFFC000\" /><rgbColor rgb=\"FFFF9900\" /><rgbColor rgb=\"FFFF6600\" /><rgbColor rgb=\"FF666699\" /><rgbColor rgb=\"FF70AD47\" /><rgbColor rgb=\"FF003366\" /><rgbColor rgb=\"FF339966\" /><rgbColor rgb=\"FF003300\" /><rgbColor rgb=\"FF333300\" /><rgbColor rgb=\"FF993300\" /><rgbColor rgb=\"FF993366\" /><rgbColor rgb=\"FF333399\" /><rgbColor rgb=\"FF333333\" /><rgbColor rgb=\"00003366\" /><rgbColor rgb=\"00339966\" /><rgbColor rgb=\"00003300\" /><rgbColor rgb=\"00333300\" /><rgbColor rgb=\"00993300\" /><rgbColor rgb=\"00993366\" /><rgbColor rgb=\"00333399\" /><rgbColor rgb=\"00333333\" /><\/indexedColors><\/colors><extLst><ext uri=\"{EB79DEF2-80B8-43e5-95BD-54CBDDF9020C}\" xmlns:x14=\"http://schemas.microsoft.com/office/spreadsheetml/2009/9/main\"><x14:slicerStyles defaultSlicerStyle=\"SlicerStyleLight1\" /><\/ext><ext uri=\"{9260A510-F301-46a8-8635-F512D64BE5F5}\" xmlns:x15=\"http://schemas.microsoft.com/office/spreadsheetml/2010/11/main\"><x15:timelineStyles defaultTimelineStyle=\"TimeSlicerStyleLight1\" /><\/ext><\/extLst><\/styleSheet>", "theme": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\r\n<a:theme xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" name=\"Office Theme\"><a:themeElements><a:clrScheme name=\"Office\"><a:dk1><a:srgbClr val=\"000000\" /><\/a:dk1><a:lt1><a:srgbClr val=\"FFFFFF\" /><\/a:lt1><a:dk2><a:srgbClr val=\"44546A\" /><\/a:dk2><a:lt2><a:srgbClr val=\"E7E6E6\" /><\/a:lt2><a:accent1><a:srgbClr val=\"5B9BD5\" /><\/a:accent1><a:accent2><a:srgbClr val=\"ED7D31\" /><\/a:accent2><a:accent3><a:srgbClr val=\"A5A5A5\" /><\/a:accent3><a:accent4><a:srgbClr val=\"FFC000\" /><\/a:accent4><a:accent5><a:srgbClr val=\"4472C4\" /><\/a:accent5><a:accent6><a:srgbClr val=\"70AD47\" /><\/a:accent6><a:hlink><a:srgbClr val=\"0563C1\" /><\/a:hlink><a:folHlink><a:srgbClr val=\"954F72\" /><\/a:folHlink><\/a:clrScheme><a:fontScheme name=\"Office\"><a:majorFont><a:latin typeface=\"Calibri Light\" panose=\"020F0302020204030204\" /><a:ea typeface=\"\" /><a:cs typeface=\"\" /><\/a:majorFont><a:minorFont><a:latin typeface=\"Calibri\" panose=\"020F0502020204030204\" /><a:ea typeface=\"\" /><a:cs typeface=\"\" /><\/a:minorFont><\/a:fontScheme><a:fmtScheme><a:fillStyleLst><a:solidFill><a:schemeClr val=\"phClr\" /><\/a:solidFill><a:gradFill><a:gsLst><a:gs pos=\"0\"><a:schemeClr val=\"phClr\"><a:lumMod val=\"110000\" /><a:tint val=\"67000\" /><\/a:schemeClr><\/a:gs><a:gs pos=\"50000\"><a:schemeClr val=\"phClr\"><a:lumMod val=\"105000\" /><a:tint val=\"73000\" /><\/a:schemeClr><\/a:gs><a:gs pos=\"100000\"><a:schemeClr val=\"phClr\"><a:lumMod val=\"105000\" /><a:tint val=\"81000\" /><\/a:schemeClr><\/a:gs><\/a:gsLst><a:lin ang=\"5400000\" scaled=\"0\" /><a:tileRect /><\/a:gradFill><a:gradFill><a:gsLst><a:gs pos=\"0\"><a:schemeClr val=\"phClr\"><a:lumMod val=\"102000\" /><a:tint val=\"94000\" /><\/a:schemeClr><\/a:gs><a:gs pos=\"50000\"><a:schemeClr val=\"phClr\"><a:lumMod val=\"100000\" /><a:shade val=\"100000\" /><\/a:schemeClr><\/a:gs><a:gs pos=\"100000\"><a:schemeClr val=\"phClr\"><a:lumMod val=\"99000\" /><a:shade val=\"78000\" /><\/a:schemeClr><\/a:gs><\/a:gsLst><a:lin ang=\"5400000\" scaled=\"0\" /><a:tileRect /><\/a:gradFill><\/a:fillStyleLst><a:lnStyleLst><a:ln w=\"6350\" cap=\"flat\" cmpd=\"sng\" algn=\"ctr\"><a:prstDash val=\"solid\" /><a:miter lim=\"800000\" /><\/a:ln><a:ln w=\"12700\" cap=\"flat\" cmpd=\"sng\" algn=\"ctr\"><a:prstDash val=\"solid\" /><a:miter lim=\"800000\" /><\/a:ln><a:ln w=\"19050\" cap=\"flat\" cmpd=\"sng\" algn=\"ctr\"><a:prstDash val=\"solid\" /><a:miter lim=\"800000\" /><\/a:ln><\/a:lnStyleLst><a:effectStyleLst><a:effectStyle><a:effectLst /><\/a:effectStyle><a:effectStyle><a:effectLst /><\/a:effectStyle><a:effectStyle><a:effectLst /><\/a:effectStyle><\/a:effectStyleLst><a:bgFillStyleLst><a:solidFill><a:schemeClr val=\"phClr\" /><\/a:solidFill><a:solidFill><a:schemeClr val=\"phClr\"><a:tint val=\"95000\" /><\/a:schemeClr><\/a:solidFill><a:gradFill><a:gsLst><a:gs pos=\"0\"><a:schemeClr val=\"phClr\"><a:tint val=\"93000\" /><a:shade val=\"98000\" /><a:lumMod val=\"102000\" /><\/a:schemeClr><\/a:gs><a:gs pos=\"50000\"><a:schemeClr val=\"phClr\"><a:tint val=\"98000\" /><a:shade val=\"90000\" /><a:lumMod val=\"103000\" /><\/a:schemeClr><\/a:gs><a:gs pos=\"100000\"><a:schemeClr val=\"phClr\"><a:shade val=\"63000\" /><\/a:schemeClr><\/a:gs><\/a:gsLst><a:lin ang=\"5400000\" scaled=\"0\" /><a:tileRect /><\/a:gradFill><\/a:bgFillStyleLst><\/a:fmtScheme><\/a:themeElements><a:objectDefaults /><a:extraClrSchemeLst /><\/a:theme>", "wsOpen": "<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" xmlns:mc=\"http://schemas.openxmlformats.org/markup-compatibility/2006\" mc:Ignorable=\"x14ac xr xr2 xr3\" xmlns:x14ac=\"http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac\" xmlns:xr=\"http://schemas.microsoft.com/office/spreadsheetml/2014/revision\" xmlns:xr2=\"http://schemas.microsoft.com/office/spreadsheetml/2015/revision2\" xmlns:xr3=\"http://schemas.microsoft.com/office/spreadsheetml/2016/revision3\">", "fmt": "<sheetFormatPr defaultRowHeight=\"15\" x14ac:dyDescent=\"0.2\" />", "cols": "<cols><col min=\"1\" max=\"1\" width=\"3.2265625\" style=\"20\" customWidth=\"1\" /><col min=\"2\" max=\"2\" width=\"9.953125\" style=\"20\" customWidth=\"1\" /><col min=\"4\" max=\"4\" width=\"26.23046875\" style=\"20\" customWidth=\"1\" /><\/cols>", "margins": "<pageMargins left=\"0.75\" right=\"0.75\" top=\"1\" bottom=\"1\" header=\"0.5\" footer=\"0.5\" />", "str": {"title": "CNG TIME TABLE ", "sub": "OFF PICK AND CHANGING SHIFT BUSES  06:00AM TO 18:00PM  BUSES", "no": "NO", "date": "DATE ", "bus": "BUS NO.", "driver": "DRIVER NAME", "km": "KM", "gas": "GAS", "tin": "TIME IN ", "tout": "TIME OUT", "night": "NIGHT SHIFT FROM 18:00PM TO 06:00AM", "mtr": "MTR", "lake": "LAKE RECORDS", "pump": "PUMP NO.2", "opening": "OPENING", "record": "THIS IS ARE RECORD ", "closed": "CLOSED", "filled": "FIILED", "allshift": "FOR ALL SHIFT", "amount": "AMOUNT OF GAS FILLED IN ALL SHIFT  AT ALL PUMP ", "laketotal": "LAKE TOTAL", "mofat": "MOFAT TOTAL", "diff": "DIFFERENT"}};
+const XE = s => String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,"");
+const sheetDate = d => d.slice(8,10)+"."+d.slice(5,7)+"."+d.slice(0,4);
+const MONTH_UP = ["JANUARY","FEBRUARY","MARCH","APRIL","MAY","JUNE","JULY","AUGUST","SEPTEMBER","OCTOBER","NOVEMBER","DECEMBER"];
+function slotsFor(d){ const wd=new Date(d+"T12:00:00").getDay(); return wd===6 ? 57 : wd===0 ? 33 : 70; }
+const colNum = c => c.charCodeAt(0)-64;
+const isNum = v => typeof v==="number" && isFinite(v);
+const r4 = n => Math.round(n*10000)/10000;
+
+// cell kinds: empty, number, text, formula (cached value number or "")
+const cE = s => ({s});
+const cN = (s,v) => ({s, n:v});
+const cS = (s,v) => ({s, t:v});
+const cF = (s,f,v) => ({s, f, v});
+
+function sheetBuilder(){
+  const rows=new Map(), merges=[], attrs=new Map();
+  return {
+    cell(ref,c){ const m=/^([A-Z]+)(\d+)$/.exec(ref), r=+m[2]; if(!rows.has(r)) rows.set(r,new Map()); rows.get(r).set(m[1],c); },
+    merge(ref){ merges.push(ref); },
+    row(r,a){ attrs.set(r,a); if(!rows.has(r)) rows.set(r,new Map()); },
+    xml(){
+      const out=[];
+      [...rows.keys()].sort((a,b)=>a-b).forEach(r=>{
+        const cells=[...rows.get(r).entries()].sort((a,b)=>colNum(a[0])-colNum(b[0])).map(([col,c])=>{
+          const ref=col+r; let x=`<c r="${ref}" s="${c.s}"`;
+          if(c.f!=null) return x+(isNum(c.v)?"":' t="str"')+`><f>${XE(c.f)}</f><v>${isNum(c.v)?r4(c.v):""}</v></c>`;
+          if(c.n!=null) return x+`><v>${c.n}</v></c>`;
+          if(c.t!=null) return x+` t="inlineStr"><is><t xml:space="preserve">${XE(c.t)}</t></is></c>`;
+          return x+"/>";
+        }).join("");
+        const a=attrs.get(r);
+        out.push(`<row r="${r}"${a?" "+a:""}${cells?">"+cells+"</row>":"/>"}`);
+      });
+      return {rows:out.join(""), merges};
+    }
+  };
 }
-function hasData(d,s){ return shiftEntries(d,s).length>0 || !!store.shifts[skey(d,s)]; }
-function workbook(keys, summaryTitle){
-  const wb={SheetNames:[], Sheets:{}, Workbook:{Sheets:[]}};
-  const add=(name,ws,hidden)=>{ let n=name.slice(0,31), i=2; while(wb.Sheets[n]) n=(name.slice(0,28)+" "+i++); wb.SheetNames.push(n); wb.Sheets[n]=ws; wb.Workbook.Sheets.push({Hidden:hidden?1:0}); };
-  if(summaryTitle){ add("Summary", summarySheet(keys, summaryTitle)); add("Routes", routesSheet(keys, summaryTitle)); }
-  keys.forEach(([d,s])=>add(+d.slice(8,10)+" "+MON[+d.slice(5,7)-1]+" "+shiftLabel(s), shiftSheet(d,s)));
-  add("_data", dataSheet(dataPayload(keys)), true);
-  return XLSX.write(wb,{type:"array", bookType:"xlsx", compression:true});
+
+/* rd = {o:{1..4}, c:{1..4}} readings; chain = previous sheet {name, closedRow:{1..4}, close:{1..4}} */
+function masterSheet(date, day, night, rd, chain, first){
+  const S=TPL.str, ds=sheetDate(date), B=sheetBuilder();
+  const N=Math.max(slotsFor(date), day.length), M=Math.max(slotsFor(date), night.length);
+  const daySum=4+N, nT=daySum+1, n0=nT+2, nightSum=n0+M, tot=nightSum+1, F=tot+2;
+  const fixed='ht="15" customHeight="1"';
+  const span=(r,from,to,s)=>{ for(let c=colNum(from);c<=colNum(to);c++) B.cell(String.fromCharCode(64+c)+r,cE(s)); };
+
+  // titles and header
+  span(1,"B","G",26); B.cell("A1",cS(25,S.title)); B.cell("H1",cE(27)); B.merge("A1:H1"); B.row(1,'ht="15.6" customHeight="1"');
+  span(2,"B","G",26); B.cell("A2",cS(34,S.sub)); B.cell("H2",cE(27)); B.merge("A2:H2");
+  [S.no,S.date,S.bus,S.driver,S.km,S.gas,S.tin,S.tout].forEach((h,i)=>B.cell("ABCDEFGH"[i]+"3",cS(i===5?3:2,h)));
+
+  // bus rows
+  const DAY={A:4,B:4,C:4,D:4,E:4,F:5,G:6,H:6}, NIGHT={A:7,B:4,C:7,D:7,E:7,F:8,G:9,H:6};
+  const busRow=(r,i,e,st)=>{
+    B.cell("A"+r,cN(st.A,i)); B.cell("B"+r,cS(st.B,ds));
+    B.cell("C"+r, e&&e.bus ? cS(st.C,e.bus) : cE(st.C));
+    B.cell("D"+r, e&&e.driver ? cS(st.D,e.driver) : cE(st.D));
+    B.cell("E"+r, e&&isNum(e.km) ? cN(st.E,e.km) : cE(st.E));
+    B.cell("F"+r, e&&isNum(e.kg) ? cN(st.F,e.kg) : cE(st.F));
+    const ti=e?mins(e.pumpIn):null, to=e?mins(e.pumpOut):null;
+    B.cell("G"+r, ti!=null ? cN(st.G,r4(ti/1440*1e6)/1e6) : cE(st.G));
+    B.cell("H"+r, to!=null ? cN(st.H,r4(to/1440*1e6)/1e6) : cE(st.H));
+  };
+  for(let i=0;i<N;i++) busRow(4+i,i+1,day[i],DAY);
+  const dayKg=day.reduce((a,e)=>a+(e.kg||0),0), nightKg=night.reduce((a,e)=>a+(e.kg||0),0);
+  span(daySum,"A","D",10); B.cell("E"+daySum,cE(11)); B.cell("F"+daySum,cF(36,`SUM(F4:F${daySum-1})`,dayKg)); B.cell("G"+daySum,cE(24)); B.cell("H"+daySum,cE(22)); B.merge(`F${daySum}:H${daySum}`);
+  B.cell("A"+nT,cS(38,S.night)); span(nT,"B","G",39); B.cell("H"+nT,cE(40));
+  B.cell("A"+(nT+1),cE(41)); span(nT+1,"B","G",42); B.cell("H"+(nT+1),cE(43)); B.merge(`A${nT}:H${nT+1}`);
+  for(let i=0;i<M;i++) busRow(n0+i,i+1,night[i],NIGHT);
+  B.cell("F"+nightSum,cF(36,`SUM(F${n0}:F${nightSum-1})`,nightKg)); B.cell("G"+nightSum,cE(24)); B.cell("H"+nightSum,cE(22)); B.merge(`F${nightSum}:H${nightSum}`); B.row(nightSum,fixed);
+  B.cell("F"+tot,cF(35,`F${daySum}+F${nightSum}`,dayKg+nightKg)); B.cell("G"+tot,cE(24)); B.cell("H"+tot,cE(22)); B.merge(`F${tot}:H${tot}`); B.row(tot,fixed);
+  B.row(F-1,fixed);
+
+  // pump meter blocks: pumps 2|3 exactly as the template, then pumps 1|4 in the same style
+  const pumpLabel = n => S.pump.replace(/2\s*$/, String(n));
+  const filledVal={}, closedRow={}, closeOut={};
+  const block=(base,left,right,withRecordBox)=>{
+    for(let r=base;r<=base+4;r++) B.row(r,fixed);
+    B.cell("D"+base,cS(12,S.mtr)); B.cell("E"+base,cS(28,S.lake)); B.cell("F"+base,cE(22)); B.cell("G"+base,cS(12,S.mtr)); B.cell("H"+base,cE(1)); B.merge(`E${base}:F${base}`);
+    const t=base+1; B.cell("C"+t,cS(21,pumpLabel(left))); B.cell("D"+t,cE(24)); B.cell("E"+t,cE(22)); B.merge(`C${t}:E${t}`);
+    B.cell("F"+t,cS(21,pumpLabel(right))); B.cell("G"+t,cE(24)); B.cell("H"+t,cE(24)); B.cell("I"+t,cE(22)); B.merge(`F${t}:I${t}`);
+    const o=base+2, c=base+3, f=base+4;
+    [[o,S.opening],[c,S.closed],[f,S.filled]].forEach(([r,lab])=>{
+      B.cell("B"+r,cS(21,lab)); B.cell("C"+r,cE(22)); B.merge(`B${r}:C${r}`);
+      B.cell("G"+r,cS(21,lab)); B.cell("H"+r,cE(22)); B.merge(`G${r}:H${r}`);
+      B.cell("J"+r,cE(24)); B.cell("K"+r,cE(22)); B.merge(`I${r}:K${r}`);
+    });
+    [[left,"D",18,15,19],[right,"I",29,29,30]].forEach(([p,col,so,sc,sf])=>{
+      let ov=isNum(rd.o[p]) ? rd.o[p] : null, oc;
+      if(ov!=null) oc=cN(so,ov);
+      else if(chain){ const ref=`'${chain.name}'!${col}${chain.closedRow[p]}`; const cv=isNum(chain.close[p])?chain.close[p]:""; oc=cF(so,`IF(${ref}="","",${ref})`,cv); ov=isNum(cv)?cv:null; }
+      else oc=cE(so);
+      B.cell(col+o,oc);
+      const cv=isNum(rd.c[p]) ? rd.c[p] : null;
+      B.cell(col+c, cv!=null ? cN(sc,cv) : cE(sc));
+      const fv = cv!=null && ov!=null ? cv-ov : "";
+      B.cell(col+f,cF(sf,`IF(${col}${c}="","",${col}${c}-${col}${o})`,fv));
+      filledVal[p]={ref:`${col}${f}`, v:fv}; closedRow[p]=c; closeOut[p]=cv;
+    });
+    if(withRecordBox){
+      B.cell("E"+o,cS(13,S.record)); B.cell("F"+o,cE(16));
+      B.cell("E"+c,cS(31,ds)); B.cell("F"+c,cE(32)); B.merge(`E${c}:F${c}`);
+      B.cell("E"+f,cS(14,S.allshift)); B.cell("F"+f,cE(17));
+    }
+  };
+  block(F,2,3,true);
+  B.row(F+5,fixed);
+  block(F+6,1,4,false);
+
+  // totals: every pump, Lake (meters) vs Mofat (logged)
+  const a=F+11; for(let r=a;r<=a+8;r++) B.row(r,fixed);
+  B.cell("B"+a,cS(21,S.amount)); span(a,"C","F",24); B.cell("G"+a,cE(22)); B.merge(`B${a}:G${a}`);
+  const line=(r,label,s,f,v)=>{ B.cell("C"+r,cS(21,label)); B.cell("D"+r,cE(22)); B.merge(`C${r}:D${r}`); B.cell("E"+r,cF(s,f,v)); B.cell("F"+r,cE(22)); B.merge(`E${r}:F${r}`); };
+  [1,2,3,4].forEach((p,i)=>line(a+1+i,pumpLabel(p),30,filledVal[p].ref,filledVal[p].v));
+  const meters=[1,2,3,4].map(p=>filledVal[p].v).filter(isNum);
+  const lake = meters.length ? meters.reduce((x,y)=>x+y,0) : "";
+  line(a+5,S.laketotal,33,`IF(COUNT(E${a+1}:E${a+4})=0,"",SUM(E${a+1}:E${a+4}))`,lake);
+  line(a+6,S.mofat,37,`F${tot}`,dayKg+nightKg);
+  line(a+7,S.diff,23,`IF(E${a+5}="","",E${a+5}-E${a+6})`, isNum(lake) ? lake-(dayKg+nightKg) : "");
+  const last=a+7;
+
+  const {rows,merges}=B.xml();
+  const xml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n${TPL.wsOpen}<dimension ref="A1:K${last}"/>`+
+    `<sheetViews><sheetView ${first?'tabSelected="1" ':''}workbookViewId="0"/></sheetViews>${TPL.fmt}${TPL.cols}`+
+    `<sheetData>${rows}</sheetData><mergeCells count="${merges.length}">${merges.map(m=>`<mergeCell ref="${m}"/>`).join("")}</mergeCells>${TPL.margins}</worksheet>`;
+  return {xml, closedRow, close:closeOut};
 }
+
+// Hidden sheet holding the raw data, so another phone can add this file to its log.
+function dataSheetXml(payload){
+  const s=JSON.stringify(payload), parts=["CNG Fuel Log data – do not edit this sheet"];
+  for(let i=0;i<s.length;i+=30000) parts.push(s.slice(i,i+30000));
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>`+
+    parts.map((p,i)=>`<row r="${i+1}"><c r="A${i+1}" t="inlineStr"><is><t xml:space="preserve">${XE(p)}</t></is></c></row>`).join("")+`</sheetData></worksheet>`;
+}
+
+function buildXlsx(sheets){
+  const C=XLSX.CFB, z=C.utils.cfb_new({root:"R"}), enc=new TextEncoder();
+  const add=(p,s)=>C.utils.cfb_add(z,p,enc.encode(s));
+  const H='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
+  const WS="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml";
+  add("[Content_Types].xml", H+`<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/>`+
+    `<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>`+
+    sheets.map((s,i)=>`<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="${WS}"/>`).join("")+
+    `<Override PartName="/xl/theme/theme1.xml" ContentType="application/vnd.openxmlformats-officedocument.theme+xml"/>`+
+    `<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`);
+  add("_rels/.rels", H+`<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`);
+  add("xl/workbook.xml", H+`<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><workbookPr/><bookViews><workbookView activeTab="0"/></bookViews><sheets>`+
+    sheets.map((s,i)=>`<sheet name="${XE(s.name)}" sheetId="${i+1}"${s.hidden?' state="hidden"':''} r:id="rId${i+1}"/>`).join("")+
+    `</sheets><calcPr calcId="191029" fullCalcOnLoad="1"/></workbook>`);
+  const n=sheets.length;
+  add("xl/_rels/workbook.xml.rels", H+`<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">`+
+    sheets.map((s,i)=>`<Relationship Id="rId${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i+1}.xml"/>`).join("")+
+    `<Relationship Id="rId${n+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme" Target="theme/theme1.xml"/>`+
+    `<Relationship Id="rId${n+2}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`);
+  add("xl/styles.xml", TPL.styles);
+  add("xl/theme/theme1.xml", TPL.theme);
+  sheets.forEach((s,i)=>add(`xl/worksheets/sheet${i+1}.xml`, s.xml));
+  return C.write(z,{type:"array", fileType:"zip", compression:true});
+}
+
+/* Readings for a date sheet. The master records one opening and one closing per date:
+   opening = first shift's opening, closing = last shift's closing. */
+function dateReadings(d, shifts){
+  const dd=store.shifts[skey(d,"day")]||{}, nd=store.shifts[skey(d,"night")]||{};
+  const hasD=shifts.includes("day"), hasN=shifts.includes("night"), o={}, c={};
+  [1,2,3,4].forEach(p=>{
+    const ko="p"+p+"o", kc="p"+p+"c";
+    o[p] = hasD&&isNum(dd[ko]) ? dd[ko] : hasN&&isNum(nd[ko]) ? nd[ko] : null;
+    c[p] = hasN&&isNum(nd[kc]) ? nd[kc] : hasD&&isNum(dd[kc]) ? dd[kc] : null;
+  });
+  return {o,c};
+}
+
+// dates: sorted YYYY-MM-DD; shifts: which shifts to include; chainOpenings: link each opening to the previous sheet's closing
+function masterWorkbook(dates, shifts, chainOpenings){
+  const sheets=[]; let prev=null;
+  dates.forEach((d,i)=>{
+    const day = shifts.includes("day") ? shiftEntries(d,"day") : [];
+    const night = shifts.includes("night") ? shiftEntries(d,"night") : [];
+    const res = masterSheet(d, day, night, dateReadings(d,shifts), chainOpenings?prev:null, i===0);
+    sheets.push({name:sheetDate(d), xml:res.xml});
+    prev={name:sheetDate(d), closedRow:res.closedRow, close:res.close};
+  });
+  const keys=[]; dates.forEach(d=>shifts.forEach(s=>keys.push([d,s])));
+  sheets.push({name:"_data", xml:dataSheetXml(dataPayload(keys)), hidden:true});
+  return buildXlsx(sheets);
+}
+
+
 const XMIME="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 async function deliver(bytes, name, mime){
   const blob=new Blob([bytes],{type:mime});
@@ -779,26 +1187,24 @@ async function deliver(bytes, name, mime){
   const url=URL.createObjectURL(blob), a=document.createElement("a");
   a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove();
   setTimeout(()=>URL.revokeObjectURL(url),10000);
-  toast("Saved to Downloads: "+name);
+  toast(t("saved.dl",{f:name}));
 }
 const who = () => safeName(store.meta.device) ? "_"+safeName(store.meta.device) : "";
+function hasData(d,s){ return shiftEntries(d,s).length>0 || !!store.shifts[skey(d,s)]; }
 $("#xShift").addEventListener("click",()=>{
-  if(!hasData(S.date,S.shift)){ toast("Nothing saved in this shift yet"); return; }
-  deliver(workbook([[S.date,S.shift]]), "CNG_"+S.date+"_"+shiftLabel(S.shift)+who()+".xlsx", XMIME);
+  if(!hasData(S.date,S.shift)){ toast(t("nothing.shift")); return; }
+  deliver(masterWorkbook([S.date],[S.shift],false), "CNG_"+sheetDate(S.date)+"_"+S.shift.toUpperCase()+who()+".xlsx", XMIME);
 });
 $("#xDay").addEventListener("click",()=>{
-  const keys=[[S.date,"day"],[S.date,"night"]].filter(([d,s])=>hasData(d,s));
-  if(!keys.length){ toast("Nothing saved on "+dmy(S.date)+" yet"); return; }
-  deliver(workbook(keys), "CNG_"+S.date+who()+".xlsx", XMIME);
+  if(!hasData(S.date,"day") && !hasData(S.date,"night")){ toast(t("nothing.date",{d:dmy(S.date)})); return; }
+  deliver(masterWorkbook([S.date],["day","night"],false), "CNG_"+sheetDate(S.date)+who()+".xlsx", XMIME);
 });
 $("#xMonth").addEventListener("click",()=>{
-  const m=$("#month").value; if(!m){ toast("Pick a month"); return; }
-  const set=new Set();
-  active().forEach(e=>{ if(e.date && e.date.startsWith(m)) set.add(skey(e.date,e.shift)); });
-  Object.keys(store.shifts).forEach(k=>{ if(k.startsWith(m)) set.add(k); });
-  const keys=[...set].map(k=>k.split("|")).sort((a,b)=>a[0].localeCompare(b[0]) || (a[1]==="night")-(b[1]==="night"));
-  if(!keys.length){ toast("Nothing saved in "+monthLabel(m)); return; }
-  deliver(workbook(keys, "CNG Fuel – "+monthLabel(m)), "CNG_"+m+who()+".xlsx", XMIME);
+  const m=$("#month").value; if(!m){ toast(t("pick.month")); return; }
+  const y=+m.slice(0,4), mo=+m.slice(5,7), last=new Date(y,mo,0).getDate();
+  const dates=[]; for(let d=1; d<=last; d++) dates.push(m+"-"+pad(d));
+  if(!dates.some(d=>hasData(d,"day")||hasData(d,"night"))){ toast(t("nothing.month",{m:monthLabel(m)})); return; }
+  deliver(masterWorkbook(dates,["day","night"],true), MONTH_UP[mo-1]+"_CNG_"+y+who()+".xlsx", XMIME);
 });
 $("#backup").addEventListener("click",()=>{
   const p={app:APP, v:1, from:store.meta.device||"", at:Date.now(), entries:store.entries, shifts:store.shifts, routes:store.routes};
@@ -807,25 +1213,23 @@ $("#backup").addEventListener("click",()=>{
 
 /* ---------- WhatsApp summary ---------- */
 function summaryText(){
-  const list=shiftEntries(), t=totals(list), {doc,logged,m2,m3}=recon();
-  const L=["*CNG Fuel Log – "+shiftLabel(S.shift)+" shift*", "Date: "+dmy(S.date)];
-  const att=doc.att||store.meta.device; if(att) L.push("Attendant: "+att);
-  L.push("Buses: "+t.n, "KG filled: "+fmt(t.kg), "KM: "+fmt(t.km));
-  if(t.wait!=null) L.push("Avg wait: "+t.wait+" min");
-  if(m2!=null) L.push("Pump 2 meter: "+fmt(m2)+" kg (logged "+fmt(logged["2"])+")");
-  if(m3!=null) L.push("Pump 3 meter: "+fmt(m3)+" kg (logged "+fmt(logged["3"])+")");
-  const open=list.filter(e=>!e.pumpOut).length; if(open) L.push("Not finished: "+open);
-  const rs=byRoute(list); if(rs.length){ L.push("", "By route:"); rs.forEach(r=>L.push("• "+r.route+": "+r.n+(r.n===1?" bus, ":" buses, ")+fmt(r.kg)+" kg")); }
-  if(doc.notes) L.push("", "Notes: "+doc.notes);
+  const list=shiftEntries(), tt=totals(list), doc=store.shifts[skey(S.date,S.shift)]||{}, logged=loggedByPump(list), m=meters(doc);
+  const L=[t("wa.title",{s:t(S.shift==="night"?"shift.night.l":"shift.day.l")}), t("wa.date",{d:dmy(S.date)})];
+  const att=doc.att||store.meta.device; if(att) L.push(t("wa.att",{a:att}));
+  L.push(t("wa.buses",{n:tt.n}), t("wa.kg",{v:fmt(tt.kg)}), t("wa.km",{v:fmt(tt.km)}));
+  if(tt.wait!=null) L.push(t("wa.wait",{m:tt.wait}));
+  PUMPS.forEach(p=>{ if(m[p]!=null) L.push(t("wa.pump",{n:p, m:fmt(m[p]), l:fmt(logged[p])})); });
+  const open=list.filter(e=>!e.pumpOut).length; if(open) L.push(t("wa.open",{n:open}));
+  const rs=byRoute(list); if(rs.length){ L.push("", t("wa.byroute")); rs.forEach(r=>L.push(t("wa.route",{r:r.route, n:busesLabel(r.n), kg:fmt(r.kg)}))); }
+  if(doc.notes) L.push("", t("wa.notes",{t:doc.notes}));
   return L.join("\n");
 }
 $("#waSum").addEventListener("click",async()=>{
-  if(!hasData(S.date,S.shift)){ toast("Nothing saved in this shift yet"); return; }
+  if(!hasData(S.date,S.shift)){ toast(t("nothing.shift")); return; }
   const text=summaryText();
   if(navigator.share){ try{ await navigator.share({text}); return; }catch(e){ if(e && e.name==="AbortError") return; } }
   try{ if(navigator.clipboard) await navigator.clipboard.writeText(text); }catch(e){}
   location.href="whatsapp://send?text="+encodeURIComponent(text);
-  setTimeout(()=>toast("Summary copied. Paste it in WhatsApp."),600);
 });
 
 /* ---------- add data from another phone ---------- */
@@ -840,7 +1244,9 @@ function cleanEntry(e){
 }
 function cleanShift(d){
   if(!d || typeof d!=="object") return null;
-  return { p2o:cn(d.p2o), p3o:cn(d.p3o), p2c:cn(d.p2c), p3c:cn(d.p3c), att:cs(d.att), notes:cs(d.notes), by:cs(d.by), updatedAt:cn(d.updatedAt)||0 };
+  const o={ att:cs(d.att), notes:cs(d.notes), by:cs(d.by), updatedAt:cn(d.updatedAt)||0 };
+  PUMPS.forEach(p=>{ o["p"+p+"o"]=cn(d["p"+p+"o"]); o["p"+p+"c"]=cn(d["p"+p+"c"]); });
+  return o;
 }
 function merge(p){
   let added=0, updated=0, readings=0;
@@ -867,18 +1273,18 @@ $("#imp").addEventListener("change",async ev=>{
     const head=new Uint8Array(await file.slice(0,2).arrayBuffer());
     if(head[0]===0x50 && head[1]===0x4B){ // .xlsx (zip)
       const wb=XLSX.read(await file.arrayBuffer(),{type:"array"});
-      const ws=wb.Sheets["_data"]; if(!ws) throw new Error("This Excel file was not made by CNG Fuel Log.");
+      const ws=wb.Sheets["_data"]; if(!ws) throw new Error(t("imp.notours"));
       let s=""; for(let r=2; ws["A"+r]; r++) s+=String(ws["A"+r].v);
       p=JSON.parse(s);
     } else { p=JSON.parse(await file.text()); }
-    if(!p || p.app!==APP) throw new Error("This file was not made by CNG Fuel Log.");
+    if(!p || p.app!==APP) throw new Error(t("imp.notours"));
     const res=merge(p);
     if(!persist()) return;
     renderAll(true); renderSend();
-    const from=p.from?" from "+p.from:"";
-    toast(res.added||res.updated||res.readings ? "Added "+res.added+" buses"+(res.updated?", updated "+res.updated:"")+from : "Nothing new"+from+". Already added.");
+    const from=p.from ? t("imp.from",{n:p.from}) : "";
+    toast(res.added||res.updated||res.readings ? t("imp.added",{n:res.added, u:res.updated?t("imp.updated",{n:res.updated}):"", from}) : t("imp.nothing",{from}));
   }catch(e){
-    toast(e && e.message && !/JSON|token|Unexpected/i.test(e.message) ? e.message : "Could not read that file.");
+    toast(e && e.message && !/JSON|token|Unexpected/i.test(e.message) ? e.message : t("imp.bad"));
   }
 });
 
@@ -887,24 +1293,27 @@ $("#delBtn").addEventListener("click",()=>{
   const m=$("#delMonth").value; if(!m) return;
   const ids=Object.values(store.entries).filter(e=>e && e.date && e.date.startsWith(m)).map(e=>e.id);
   const sk=Object.keys(store.shifts).filter(k=>k.startsWith(m));
-  if(!ids.length && !sk.length){ toast("Nothing saved in "+monthLabel(m)); return; }
-  if(!confirm("Remove "+monthLabel(m)+" from this phone? Make sure its Excel has been sent first. This cannot be undone.")) return;
+  if(!ids.length && !sk.length){ toast(t("nothing.month",{m:monthLabel(m)})); return; }
+  if(!confirm(t("confirm.delmonth",{m:monthLabel(m)}))) return;
   ids.forEach(id=>delete store.entries[id]); sk.forEach(k=>delete store.shifts[k]);
-  persist(); renderAll(true); renderSend(); toast("Removed "+monthLabel(m));
+  persist(); renderAll(true); renderSend(); toast(t("toast.removed",{m:monthLabel(m)}));
 });
 
 /* ---------- start ---------- */
 window.addEventListener("storage",e=>{ if(e.key===KEY){ load(); renderAll(true); } });
+let startBanner=null;
 if(!storageWorks()){
-  canSave=false;
-  banner("This screen cannot save your work. Save the file to the phone (Downloads), then open it with Chrome.", true);
+  canSave=false; startBanner="ban.cant";
 } else {
   load();
   try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(e){}
 }
-if(typeof XLSX==="undefined") banner("Excel part did not load. Ask for the app file again.", true);
+LANG = store.meta.lang || (/^sw\b/i.test(navigator.language||"") ? "sw" : "en");
+if(typeof XLSX==="undefined") startBanner="ban.xlsx";
 $("#welcome").hidden = !!store.meta.device || !canSave;
-renderAll(true);
+applyLang();
+fillReadings();
+if(startBanner) banner(t(startBanner), true);
 </script>
 <script>
 // Installable-app extras: offline cache, install prompts, update notice, share-the-app link.
@@ -919,7 +1328,7 @@ renderAll(true);
   const appUrl = location.origin + location.pathname.replace(/index\.html$/,"");
 
   /* offline cache + updates */
-  const BUILD = "57d3e4e328";
+  const BUILD = "7418d36e06";
   // This page is out of date when the stored copy of the app belongs to a newer version.
   async function staleCheck(){
     try{
@@ -940,7 +1349,7 @@ renderAll(true);
   /* send the app link */
   $("#shareApp").hidden=false;
   $("#shareApp").addEventListener("click",async()=>{
-    const text="CNG Fuel Log app. Open this link, then add it to your home screen:";
+    const text=t("share.text");
     if(navigator.share){ try{ await navigator.share({title:"CNG Fuel Log", text, url:appUrl}); return; }catch(e){ if(e && e.name==="AbortError") return; } }
     location.href="whatsapp://send?text="+encodeURIComponent(text+" "+appUrl);
   });
@@ -948,16 +1357,24 @@ renderAll(true);
   /* install card */
   if(standalone) return;
   let snoozed=false;
-  try{ const t=+localStorage.getItem(LATER); snoozed = t && Date.now()-t < 3*864e5; }catch(e){}
-  let deferred=null;
+  try{ const v=+localStorage.getItem(LATER); snoozed = v && Date.now()-v < 3*864e5; }catch(e){}
+  let deferred=null, mode=null;
   const card=$("#install");
-  function show(text, steps, withButton){
-    $("#instText").textContent=text;
-    $("#instSteps").innerHTML=(steps||[]).map(s=>"<li>"+s+"</li>").join("");
-    $("#instSteps").hidden=!(steps&&steps.length);
-    $("#instBtn").hidden=!withButton;
-    card.hidden=false;
+  const MODES = {
+    prompt:  {text:"inst.prompt",  steps:[], button:true},
+    ios:     {text:"inst.ios",     steps:["inst.ios1","inst.ios2","inst.ios3"]},
+    inapp:   {text:"inst.inapp",   steps:["inst.inapp1","inst.inapp2"]},
+    android: {text:"inst.android", steps:["inst.and1","inst.and2"]}
+  };
+  function render(){
+    if(!mode) return; const m=MODES[mode];
+    $("#instText").textContent=t(m.text);
+    $("#instSteps").innerHTML=m.steps.map(k=>"<li>"+t(k)+"</li>").join("");
+    $("#instSteps").hidden=!m.steps.length;
+    $("#instBtn").hidden=!m.button;
   }
+  function show(m){ mode=m; render(); card.hidden=false; }
+  window.pwaRelang = render;
   $("#instLater").addEventListener("click",()=>{
     card.hidden=true; try{ localStorage.setItem(LATER,String(Date.now())); }catch(e){}
     if(!store.meta.device && canSave) $("#welcome").hidden=false;
@@ -968,33 +1385,16 @@ renderAll(true);
     try{ const c=await deferred.userChoice; if(c && c.outcome==="accepted") card.hidden=true; }catch(e){}
     deferred=null; $("#instBtn").hidden=true;
   });
-  window.addEventListener("beforeinstallprompt",e=>{
-    e.preventDefault(); deferred=e;
-    show("Tap Install. The app gets its own icon and works without internet.", null, true);
-  });
-  window.addEventListener("appinstalled",()=>{ card.hidden=true; toast("Installed. Open CNG Log from your home screen."); });
+  window.addEventListener("beforeinstallprompt",e=>{ e.preventDefault(); deferred=e; show("prompt"); });
+  window.addEventListener("appinstalled",()=>{ card.hidden=true; toast(t("inst.done")); });
 
   if(snoozed) return;
   if(iOS){
-    if(inApp){
-      show("Open this link in Safari first, then add it to your home screen.", ["Tap the <b>⋯</b> or compass button.","Choose <b>Open in Safari</b>."]);
-    } else {
-      $("#welcome").hidden=true; // set the name inside the installed app, not in Safari
-      show("On iPhone it takes three taps:", [
-        "Tap the <b>Share</b> button (square with an arrow).",
-        "Scroll down and tap <b>Add to Home Screen</b>, then <b>Add</b>.",
-        "Open <b>CNG Log</b> from your home screen and work there. Work typed here in the browser does not move into the home screen app."
-      ]);
-    }
+    if(inApp) show("inapp");
+    else { $("#welcome").hidden=true; show("ios"); } // set the name inside the installed app, not in Safari
   } else if(android){
     // Chrome shows its own prompt within a few seconds when it can; otherwise explain the menu.
-    setTimeout(()=>{
-      if(deferred || !card.hidden) return;
-      show("Add it from the browser menu:", [
-        "Opened from WhatsApp? Tap <b>⋮</b> then <b>Open in Chrome</b> first.",
-        "In Chrome tap <b>⋮</b> then <b>Add to Home screen</b> or <b>Install app</b>."
-      ]);
-    }, 3500);
+    setTimeout(()=>{ if(!deferred && card.hidden) show("android"); }, 3500);
   }
 })();
 </script>
