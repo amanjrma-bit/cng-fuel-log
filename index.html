@@ -885,13 +885,13 @@ function renderRecon(){
     $("#f"+p).textContent = m!=null ? t("read.filled",{v:fmt(m)}) : "";
     if(m!=null){
       any=true; mSum+=m; lSum+=l;
-      const d=r2(m-l), big=Math.abs(d)>Math.max(5,Math.abs(m)*0.02);
+      const d=r2(m-l)||0, big=Math.abs(d)>Math.max(5,Math.abs(m)*0.02);
       h+=`<p><span>${esc(t("recon.meter",{n:p,m:fmt(m),l:fmt(l)}))}</span><span class="${big?"off":"good"}">${d>0?"+":""}${fmt(d)}</span></p>`;
     } else if(l){ h+=`<p><span>${esc(t("recon.logged",{n:p,l:fmt(l)}))}</span></p>`; }
   });
   if(logged.none) h+=`<p><span>${esc(t("recon.nopump"))}</span><span>${fmt(logged.none)} kg</span></p>`;
   if(any){ const tl=lSum+logged.none+PUMPS.filter(p=>v("p"+p+"o")==null||v("p"+p+"c")==null).reduce((a,p)=>a+logged[p],0);
-    const d=r2(mSum-tl); h+=`<p class="sum"><span>${esc(t("recon.total",{m:fmt(mSum),l:fmt(tl)}))}</span><span>${d>0?"+":""}${fmt(d)}</span></p>`; }
+    const d=r2(mSum-tl)||0; h+=`<p class="sum"><span>${esc(t("recon.total",{m:fmt(mSum),l:fmt(tl)}))}</span><span>${d>0?"+":""}${fmt(d)}</span></p>`; }
   $("#recon").innerHTML = h;
 }
 
@@ -1338,7 +1338,7 @@ if(startBanner) banner(t(startBanner), true);
   const appUrl = location.origin + location.pathname.replace(/index\.html$/,"");
 
   /* offline cache + updates */
-  const BUILD = "534e686604";
+  const BUILD = "589ba68e5a";
   // This page is out of date when the stored copy of the app belongs to a newer version.
   async function staleCheck(){
     try{
