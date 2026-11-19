@@ -18,6 +18,8 @@ Mofat CNG Log is the phone app for Mofat CNG station pump attendants: log each b
 - Excel in the office master layout (one sheet per date, day and night shifts, Lake vs Mofat check, odometer column, pump attendants), with BUS SUMMARY and DRIVER SUMMARY sheets in the month file.
 - English and Kiswahili. Mofat colours.
 
+The link preview on WhatsApp uses `og-image.jpg`.
+
 ## Updating
 
 Replace `index.html`, and change the version in `sw.js` (`CACHE`) and in `index.html` (`BUILD`) to the same new value, so installed phones fetch the new version and show the **Update** button.
