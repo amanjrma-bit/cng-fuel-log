@@ -1,5 +1,5 @@
 // Keeps a copy of the app on the phone so it opens with no internet.
-const CACHE = "cng-fuel-log-1a20cbaf7f";
+const CACHE = "cng-fuel-log-802b82d15f";
 const FILES = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png",
                "./icon-maskable-512.png", "./apple-touch-icon.png", "./favicon-32.png"];
 

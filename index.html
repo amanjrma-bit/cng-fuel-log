@@ -74,6 +74,7 @@ h2{font-family:var(--cond);font-size:1.35rem;margin:0 0 12px;font-weight:700}
 .field input,.field select{width:100%;background:var(--field);border:1.5px solid var(--line);border-radius:8px;padding:12px;font-size:1.1rem;min-height:50px}
 .field input:focus,.field select:focus,.addrow input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px color-mix(in srgb,var(--teal) 25%,transparent)}
 .field.big input{font-family:var(--cond);font-size:1.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+#driver,#fDriverAM,#fDriverPM{text-transform:uppercase}
 .field.big input::placeholder{text-transform:none;font-weight:600}
 .timerow{display:flex;gap:8px}
 .timerow input{flex:1;min-width:0}
@@ -203,6 +204,10 @@ nav.tabs button{font-family:var(--cond);font-size:1.02rem;padding:12px 1px 13px;
 .search input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px color-mix(in srgb,var(--teal) 25%,transparent)}
 .search button{flex:0 0 auto;min-width:50px;border:1.5px solid var(--line);background:var(--panel);border-radius:10px;font-weight:700;cursor:pointer}
 .qinfo{font-size:.9rem;color:var(--muted);margin:0 0 8px}
+.viewnote{display:flex;align-items:center;gap:10px;margin:0 0 12px}
+.viewnote[hidden]{display:none}
+.viewnote span{flex:1}
+.viewnote button{flex:0 0 auto;border:1.5px solid var(--teal);background:var(--panel);color:var(--teal);border-radius:8px;padding:8px 10px;font-weight:700;cursor:pointer;min-height:40px}
 .dpick{display:flex;gap:8px;margin:-6px 0 14px}
 .dpick button{flex:1;min-width:0;min-height:50px;border:1.5px solid var(--line);background:var(--field);border-radius:8px;padding:6px 10px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:1px}
 .dpick button span{font-size:.78rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
@@ -266,6 +271,7 @@ details.byroute .rtbl{padding:0 16px 12px}
   </header>
 
   <div class="banner" id="banner" hidden></div>
+  <div class="note viewnote" id="viewNote" hidden><span id="viewNoteText"></span><button type="button" id="viewGo" data-i18n="view.go"></button></div>
   <div class="banner upd" id="upd" hidden><span data-i18n="upd.text"></span><button type="button" class="now" id="updBtn" data-i18n="upd.btn"></button></div>
   <div class="banner upd" id="ready" hidden><span id="readyText"></span><button type="button" class="now" id="readyBtn" data-i18n="ready.btn"></button></div>
 
@@ -305,7 +311,7 @@ details.byroute .rtbl{padding:0 16px 12px}
       <p class="note" id="fleetNote" hidden></p>
       <div class="field">
         <label for="driver" data-i18n="f.driver"></label>
-        <input id="driver" list="driverList" autocapitalize="words">
+        <input id="driver" list="driverList" autocapitalize="characters" autocomplete="off">
         <datalist id="driverList"></datalist>
       </div>
       <div class="dpick" id="dPick" role="group" hidden></div>
@@ -383,8 +389,8 @@ details.byroute .rtbl{padding:0 16px 12px}
       <p class="hint" data-i18n="cfg.hint"></p>
       <div class="fgrid">
         <div class="field"><label for="fBus" data-i18n="f.bus"></label><input id="fBus" data-i18n-ph="f.bus.ph" autocapitalize="characters" autocomplete="off"></div>
-        <div class="field"><label for="fDriverAM" data-i18n="fleet.am"></label><input id="fDriverAM" list="driverList" autocapitalize="words" autocomplete="off"></div>
-        <div class="field"><label for="fDriverPM" data-i18n="fleet.pm"></label><input id="fDriverPM" list="driverList" autocapitalize="words" autocomplete="off"></div>
+        <div class="field"><label for="fDriverAM" data-i18n="fleet.am"></label><input id="fDriverAM" list="driverList" autocapitalize="characters" autocomplete="off"></div>
+        <div class="field"><label for="fDriverPM" data-i18n="fleet.pm"></label><input id="fDriverPM" list="driverList" autocapitalize="characters" autocomplete="off"></div>
         <div class="field"><label for="fRoute" data-i18n="fleet.route"></label><select id="fRoute"><option value=""></option></select></div>
       </div>
       <button class="primary" id="fSave" type="button" data-i18n="fleet.save"></button>
@@ -599,6 +605,8 @@ en: {
   "cfg.hint":"Add bus uses these times to fill in the driver. From the afternoon start until the next morning start, the afternoon driver is used.",
   "cfg.saved":"Driver change times saved", "fleet.infer":"Fill in missing drivers from the log ({n} buses)", "toast.inferred":"Drivers filled in for {n} buses",
   "rp.usual":"Usual drivers: {am} (morning), {pm} (afternoon)",
+  "view.old":"You are on {d}, {s} shift — not the current shift.", "view.go":"Go to current shift", "view.now":"Now on the current shift",
+  "draft.back":"Your unsaved bus is back. Save it when ready.", "draft.read":"Your unsaved meter readings are back. Tap Save readings when ready.",
   "rp.nopump":"No pump", "rp.tapmonth":"Tap a month to see its days.", "rp.kgcol":"KG", "rp.kmcol":"KM", "rp.chart":"Day shift and night shift kg, one column per {u}", "u.day":"date", "u.month":"month"
 },
 sw: {
@@ -692,6 +700,8 @@ sw: {
   "cfg.hint":"Fomu ya Ongeza inatumia muda huu kujaza dereva. Kuanzia muda wa mchana hadi asubuhi inayofuata, dereva wa mchana anatumika.",
   "cfg.saved":"Muda wa kubadilishana madereva umehifadhiwa", "fleet.infer":"Jaza madereva wanaokosekana kutoka kwenye ujazaji (mabasi {n})", "toast.inferred":"Madereva wamejazwa kwa mabasi {n}",
   "rp.usual":"Madereva wa kawaida: {am} (asubuhi), {pm} (mchana)",
+  "view.old":"Uko kwenye {d}, zamu ya {s} — si zamu ya sasa.", "view.go":"Nenda zamu ya sasa", "view.now":"Sasa uko kwenye zamu ya sasa",
+  "draft.back":"Basi ambalo halikuhifadhiwa limerudishwa. Lihifadhi ukiwa tayari.", "draft.read":"Usomaji wa mita ambao haukuhifadhiwa umerudishwa. Gusa Hifadhi usomaji ukiwa tayari.",
   "rp.nopump":"Pampu haikuchaguliwa", "rp.tapmonth":"Gusa mwezi kuona siku zake.", "rp.kgcol":"KG", "rp.kmcol":"KM", "rp.chart":"Kg za zamu ya mchana na usiku, safu moja kwa kila {u}", "u.day":"tarehe", "u.month":"mwezi"
 }
 };
@@ -721,6 +731,7 @@ const shiftLabel = s => t(s==="night" ? "shift.night" : "shift.day");
 const uid = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : Date.now().toString(36)+Math.random().toString(36).slice(2,10)+Math.random().toString(36).slice(2,6);
 const safeName = s => String(s||"").trim().replace(/\s+/g,"-").replace(/[^A-Za-z0-9_-]/g,"").slice(0,24);
 const normBus = v => String(v||"").toUpperCase().replace(/\s+/g," ").trim();
+const normName = v => String(v||"").replace(/\s+/g," ").trim().toUpperCase();   // driver names are kept in capitals
 // the same few hundred bus numbers and names repeat in every fill, so their search keys are worked out once
 const memo = (f, m=new Map()) => v => { let r=m.get(v); if(r===undefined){ if(m.size>20000) m.clear(); r=f(v); m.set(v,r); } return r; };
 const busKey = memo(v => normBus(v).replace(/[\s\-.]/g,""));           // "T 123 ABC" and "T123ABC" are the same bus
@@ -844,8 +855,8 @@ function cAdd(e, building){
   C.act.push(e);
   const sh=push(C.byShift, e.date+"|"+e.shift); if(!building) sh.sort((x,y)=>sortKey(x)-sortKey(y));
   const bk=busKey(e.bus); C.keys.set(e.id,{bk, dk:nameKey(e.driver), rk:nameKey(e.route)});
-  if(bk){ push(C.byBus,bk); const u=e.updatedAt||0; if(!(bk in C.tm) || u>=C.tm[bk]){ C.tm[bk]=u; if(e.driver) S.lastDriver[bk]=e.driver; if(e.route) S.busRoute[bk]=e.route; } }
-  if(C.hb){ const k=C.keys.get(e.id); if(e.bus && !C.hb.has(k.bk)) C.hb.set(k.bk,e.bus); if(e.driver && !C.hd.has(k.dk)) C.hd.set(k.dk,e.driver); }
+  if(bk){ push(C.byBus,bk); const u=e.updatedAt||0; if(!(bk in C.tm) || u>=C.tm[bk]){ C.tm[bk]=u; if(e.driver) S.lastDriver[bk]=normName(e.driver); if(e.route) S.busRoute[bk]=e.route; } }
+  if(C.hb){ const k=C.keys.get(e.id); if(e.bus && !C.hb.has(k.bk)) C.hb.set(k.bk,e.bus); if(e.driver && !C.hd.has(k.dk)) C.hd.set(k.dk,normName(e.driver)); }
 }
 function cRemove(e){
   const del=(a)=>{ if(!a) return; const i=a.findIndex(x=>x.id===e.id); if(i>=0) a.splice(i,1); };
@@ -918,7 +929,7 @@ function applyLang(){
   $$("[data-i18n-aria]").forEach(el=>el.setAttribute("aria-label",t(el.dataset.i18nAria)));
   $("#langBtn").textContent=t("lang.other"); $("#langBtn").setAttribute("aria-label",t("lang.otherName"));
   $$(".langpick button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.lang===LANG)));
-  formTitle(); renderAll(); renderCalc(); renderDPick();
+  formTitle(); renderAll(); renderCalc(); renderDPick(); if(typeof renderViewNote==="function") renderViewNote();
   if(window.pwaRelang) window.pwaRelang();
 }
 function setLang(l){ LANG = l==="sw" ? "sw" : "en"; store.meta.lang=LANG; persist(); applyLang(); }
@@ -929,14 +940,60 @@ $$(".langpick button").forEach(b=>b.addEventListener("click",()=>setLang(b.datas
 $("#date").value=S.date;
 function paintShift(){ $$(".seg button").forEach(b=>b.setAttribute("aria-pressed", String(b.dataset.shift===S.shift))); }
 paintShift();
-$("#date").addEventListener("change",e=>{ if(!e.target.value) return; S.date=e.target.value; resetForm(); renderAll(true); });
-$$(".seg button").forEach(b=>b.addEventListener("click",()=>{ S.shift=b.dataset.shift; paintShift(); resetForm(); renderAll(true); }));
+$("#date").addEventListener("change",e=>{ if(!e.target.value) return; S.date=e.target.value; saveView(); resetForm(); renderAll(true); });
+$$(".seg button").forEach(b=>b.addEventListener("click",()=>{ S.shift=b.dataset.shift; paintShift(); saveView(); resetForm(); renderAll(true); }));
 $("#month").value=S.date.slice(0,7);
 // jump to another date and shift (from search results and reports)
 function setShift(d,s){
   if(d===S.date && s===S.shift) return;
-  S.date=d; S.shift=s==="night"?"night":"day"; $("#date").value=d; paintShift(); resetForm(); renderAll(true);
+  S.date=d; S.shift=s==="night"?"night":"day"; $("#date").value=d; paintShift(); saveView(); resetForm(); renderAll(true);
 }
+
+/* ---------- keep the chosen date, shift and anything half-typed through a refresh ----------
+   The date and shift stay as the attendant set them (a note offers the current shift instead of
+   changing it), and an unsaved bus or unsaved meter readings come back until they are saved. */
+const VKEY=KEY+":view", FKEY=KEY+":form", RKEY=KEY+":read";
+const ls={ get:k=>{ try{ return JSON.parse(localStorage.getItem(k)||"null"); }catch(e){ return null; } },
+           set:(k,v)=>{ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} },
+           del:k=>{ try{ localStorage.removeItem(k); }catch(e){} } };
+function saveView(){ ls.set(VKEY,{date:S.date, shift:S.shift}); renderViewNote(); }
+function restoreView(){
+  const v=ls.get(VKEY);
+  if(!v || !/^\d{4}-\d{2}-\d{2}$/.test(v.date||"") || (v.shift!=="day" && v.shift!=="night")) return;
+  S.date=v.date; S.shift=v.shift; $("#date").value=S.date; $("#month").value=S.date.slice(0,7); paintShift();
+}
+function renderViewNote(){
+  const d=defaultShift(), off=d.date!==S.date || d.shift!==S.shift;
+  $("#viewNote").hidden=!off;
+  if(off) $("#viewNoteText").textContent=t("view.old",{d:dmy(S.date), s:t(S.shift==="night"?"shift.night.l":"shift.day.l")});
+}
+$("#viewGo").addEventListener("click",()=>{ const d=defaultShift(); setShift(d.date,d.shift); toast(t("view.now")); });
+setInterval(renderViewNote, 60000);   // the note appears when the shift changes over; the date itself is never changed
+
+const FORM_IDS=["bus","driver","route","arrival","tin","tout","odo","kg","km"];
+let draftT=null;
+function saveDraft(){
+  clearTimeout(draftT);
+  draftT=setTimeout(()=>{
+    const v={}; let any=false; FORM_IDS.forEach(id=>{ v[id]=$("#"+id).value; if(v[id]) any=true; });
+    if(!any && !S.pump && !S.editingId){ ls.del(FKEY); return; }
+    ls.set(FKEY,{date:S.date, shift:S.shift, editingId:S.editingId, pump:S.pump, kmAuto:S.kmAuto, drvAuto:S.drvAuto, v});
+  },250);
+}
+function clearDraft(){ clearTimeout(draftT); ls.del(FKEY); }
+function restoreDraft(){
+  const d=ls.get(FKEY); if(!d || !d.v || d.date!==S.date || d.shift!==S.shift) return false;
+  if(d.editingId){ const e=store.entries[d.editingId]; if(!e || e.deleted){ clearDraft(); return false; } loadForEdit(e); }
+  ensureRouteOption(d.v.route);
+  FORM_IDS.forEach(id=>{ if(d.v[id]!=null) $("#"+id).value=d.v[id]; });
+  S.pump=d.pump||null; paintPump(); S.kmAuto=!!d.kmAuto; S.drvAuto=!!d.drvAuto;
+  $("#km").classList.toggle("pre",S.kmAuto); $("#driver").classList.toggle("pre",S.drvAuto);
+  checkTimes(); updateFleetNote(); updateOdo(); updateRatio(); renderDPick();
+  return true;
+}
+$("#form").addEventListener("input",saveDraft);
+$("#form").addEventListener("change",saveDraft);
+$("#form").addEventListener("click",e=>{ if(e.target.closest("button")) saveDraft(); });
 
 /* ---------- tabs ---------- */
 $$("nav.tabs button").forEach(b=>b.addEventListener("click",()=>showTab(b.dataset.tab)));
@@ -962,8 +1019,8 @@ function paintPump(){ $$(".pumps button").forEach(b=>b.setAttribute("aria-presse
 ["arrival","tin","tout"].forEach(id=>$("#"+id).addEventListener("change",()=>{ checkTimes(); updateOdo(); if(S.drvAuto) applyDriver(); }));
 /* Each bus has a morning-shift and an afternoon-shift driver. The form fills in the one who has the bus
    at the arrival time (or now), shows both as buttons, and keeps whatever the attendant types or picks. */
-const amOf = b => (b && (b.driverAM || b.driver)) || "";
-const pmOf = b => (b && b.driverPM) || "";
+const amOf = b => normName(b && (b.driverAM || b.driver));
+const pmOf = b => normName(b && b.driverPM);
 const cfgAM = () => (store.cfg && store.cfg.am) || "04:00";
 const cfgPM = () => (store.cfg && store.cfg.pm) || "14:00";
 function isMorning(tm, shift){
@@ -995,6 +1052,7 @@ function renderDPick(){
 }
 $("#dPick").addEventListener("click",e=>{ const b=e.target.closest("button[data-drv]"); if(!b) return; $("#driver").value=b.dataset.drv; S.drvAuto=false; $("#driver").classList.remove("pre"); renderDPick(); });
 $("#driver").addEventListener("input",()=>{ S.drvAuto=false; $("#driver").classList.remove("pre"); renderDPick(); });
+["#driver","#fDriverAM","#fDriverPM"].forEach(id=>$(id).addEventListener("change",()=>{ $(id).value=normName($(id).value); }));
 $("#bus").addEventListener("change",()=>{
   let bus=normBus($("#bus").value); const f=bus ? fleetFind(bus) : null; if(f) bus=f.bus; $("#bus").value=bus;
   const k=busKey(bus), rt=(f && f.route) || S.busRoute[k];
@@ -1052,7 +1110,7 @@ function formTitle(){
   $("#saveBtn").textContent = t(e ? "save.changes" : "save.bus");
 }
 function resetForm(){
-  $("#form").reset(); S.editingId=null; S.pump=null; S.kmAuto=false; paintPump(); formTitle();
+  $("#form").reset(); S.editingId=null; S.pump=null; S.kmAuto=false; paintPump(); formTitle(); clearDraft();
   $("#cancelEdit").hidden=true; $("#deleteBtn").hidden=true; $("#formWarn").textContent="";
   $("#km").classList.remove("pre"); $("#fleetNote").hidden=true; $("#odoHint").textContent=""; $("#ratioHint").textContent="";
   S.drvAuto=false; $("#driver").classList.remove("pre"); $("#dPick").hidden=true; $("#dPick").innerHTML="";
@@ -1094,7 +1152,7 @@ $("#form").addEventListener("submit",ev=>{
     id: prev ? prev.id : uid(),
     date: prev ? prev.date : S.date,
     shift: prev ? prev.shift : S.shift,
-    bus, driver: $("#driver").value.trim(), route: $("#route").value,
+    bus, driver: normName($("#driver").value), route: $("#route").value,
     arrival: $("#arrival").value, pumpIn: $("#tin").value, pumpOut: $("#tout").value,
     pump: S.pump, kg, km, odo,
     by: (prev && prev.by) || store.meta.device || "",
@@ -1201,7 +1259,7 @@ $("#fSave").addEventListener("click",()=>{
   const bus=normBus($("#fBus").value); if(!bus){ toast(t("fleet.nobus")); $("#fBus").focus(); return; }
   const k=busKey(bus), now=Date.now();
   if(S.fleetEdit && S.fleetEdit!==k && store.buses[S.fleetEdit]) store.buses[S.fleetEdit]={...store.buses[S.fleetEdit], deleted:true, updatedAt:now};
-  const nm=id=>$(id).value.replace(/\s+/g," ").trim(), am=nm("#fDriverAM"), pm=nm("#fDriverPM");
+  const nm=id=>normName($(id).value), am=nm("#fDriverAM"), pm=nm("#fDriverPM");
   store.buses[k]={bus, driverAM:am, driverPM:pm, driver:am||pm, route:$("#fRoute").value, updatedAt:now};   // "driver" keeps older app versions working
   const ok=persist(); fleetForm(null); renderFleet(); renderLists(); updateFleetNote();
   if(ok) toast(t("toast.fleetsaved",{bus}));
@@ -1220,7 +1278,7 @@ function inferDrivers(k){
   const am=new Map(), pm=new Map();
   (cache().byBus.get(k)||[]).forEach(e=>{
     if(!e.driver) return; const m=isMorning(e.arrival||e.pumpIn||e.pumpOut, e.shift) ? am : pm, dk=nameKey(e.driver);
-    const o=m.get(dk)||{n:e.driver, c:0}; o.c++; m.set(dk,o);
+    const o=m.get(dk)||{n:normName(e.driver), c:0}; o.c++; m.set(dk,o);
   });
   const rank=m=>[...m.values()].sort((a,b)=>b.c-a.c);
   const A=rank(am), P=rank(pm); let a=A[0]||null, p=P[0]||null;
@@ -1305,8 +1363,14 @@ function fillReadings(){
   $("#preHint").hidden=!pre;
   $("#att").value = d.att || store.meta.device || "";
   $("#notes").value = d.notes || "";
+  const rd=ls.get(RKEY), back = !!rd && rd.key===skey(S.date,S.shift) && !!rd.v;
+  if(back) Object.entries(rd.v).forEach(([id,val])=>{ const el=$("#"+id); if(el && val!=null && el.value!==val){ el.value=val; el.classList.remove("pre"); } });
   attHints(); renderAttList(); renderRecon();
+  return back;
 }
+const READ_IDS=()=>[...PUMPS.flatMap(p=>["p"+p+"o","p"+p+"c","p"+p+"a"]),"att","notes"];
+let readT=null;
+$("#rform").addEventListener("input",()=>{ clearTimeout(readT); readT=setTimeout(()=>{ const v={}; READ_IDS().forEach(id=>v[id]=$("#"+id).value); ls.set(RKEY,{key:skey(S.date,S.shift), v}); },250); });
 // an empty pump attendant shows the shift attendant as a grey hint
 function attHints(){ const a=$("#att").value.trim(); PUMPS.forEach(p=>$("#p"+p+"a").placeholder=a); }
 function renderAttList(){
@@ -1323,7 +1387,7 @@ $("#rform").addEventListener("submit",ev=>{
   PUMPS.forEach(p=>{ doc["p"+p+"o"]=num($("#p"+p+"o").value); doc["p"+p+"c"]=num($("#p"+p+"c").value); doc["p"+p+"a"]=$("#p"+p+"a").value.replace(/\s+/g," ").trim(); });
   store.shifts[skey(S.date,S.shift)]=doc;
   $$("#pumpInputs input").forEach(i=>i.classList.remove("pre")); $("#preHint").hidden=true;
-  if(persist()) toast(t("toast.readsaved"));
+  if(persist()){ toast(t("toast.readsaved")); clearTimeout(readT); ls.del(RKEY); }
   renderAttList(); renderRecon();
 });
 function renderRecon(){
@@ -1350,7 +1414,7 @@ function renderRecon(){
 function renderTally(){ const tt=totals(shiftEntries()); $("#tally").textContent=busesLabel(tt.n)+" · "+fmt(tt.kg)+" kg"; }
 function renderLists(){
   const c=cache();
-  if(!c.hb){ c.hb=new Map(); c.hd=new Map(); for(const e of c.act){ const k=c.keys.get(e.id); if(e.bus && !c.hb.has(k.bk)) c.hb.set(k.bk,e.bus); if(e.driver && !c.hd.has(k.dk)) c.hd.set(k.dk,e.driver); } }
+  if(!c.hb){ c.hb=new Map(); c.hd=new Map(); for(const e of c.act){ const k=c.keys.get(e.id); if(e.bus && !c.hb.has(k.bk)) c.hb.set(k.bk,e.bus); if(e.driver && !c.hd.has(k.dk)) c.hd.set(k.dk,normName(e.driver)); } }
   const fl=fleetList(), buses=new Map(), drivers=new Map();
   fl.forEach(b=>buses.set(busKey(b.bus),b.bus)); c.hb.forEach((v,k)=>{ if(!buses.has(k)) buses.set(k,v); });
   fl.forEach(b=>[amOf(b),pmOf(b)].forEach(n=>{ const k=nameKey(n); if(k && !drivers.has(k)) drivers.set(k,n); })); c.hd.forEach((v,k)=>{ if(!drivers.has(k)) drivers.set(k,v); });
@@ -1395,7 +1459,7 @@ function entryHtml(e, withDate){
   return `<button type="button" class="entry${unfinished?" unfinished":""}" data-id="${esc(e.id)}">
       ${withDate?`<span class="when">${esc(dmy(e.date)+" · "+shiftLabel(e.shift))}</span>`:""}
       <span class="bus">${esc(e.bus)}</span>
-      <span class="who">${esc(e.driver||t("log.nodriver"))}${unfinished?`<span class="tag">${esc(t("log.unfinished"))}</span>`:""}</span>
+      <span class="who">${esc(normName(e.driver)||t("log.nodriver"))}${unfinished?`<span class="tag">${esc(t("log.unfinished"))}</span>`:""}</span>
       <span class="kg">${e.kg!=null?fmt(e.kg)+" kg":"– kg"}</span>
       <span class="times">${esc(tm)}</span>
       ${kmTxt?`<span class="km">${esc(kmTxt)}</span>`:""}
@@ -1591,7 +1655,7 @@ function groupBy(list, kind){
     if(!k) return;
     let g=m.get(k); if(!g){ g={k, label:"", list:[], u:-1}; m.set(k,g); }
     g.list.push(e);
-    if((e.updatedAt||0)>g.u){ g.u=e.updatedAt||0; g.label = kind==="bus" ? e.bus : (e.driver || t("log.nodriver")); }
+    if((e.updatedAt||0)>g.u){ g.u=e.updatedAt||0; g.label = kind==="bus" ? e.bus : (normName(e.driver) || t("log.nodriver")); }
   });
   if(kind==="bus") m.forEach(g=>{ const f=fleetFind(g.label); if(f) g.label=f.bus; });
   return m;
@@ -1621,7 +1685,7 @@ function rpDetail(g, kind){
     const f=fleetFind(g.label), routes=uniq(l.map(e=>e.route)); if(f && f.route && !routes.length) routes.push(f.route);
     if(routes.length) info.push(t("rp.route",{v:routes.join(", ")}));
     if(amOf(f) || pmOf(f)) info.push(t("rp.usual",{am:amOf(f)||"–", pm:pmOf(f)||"–"}));
-    const ds=uniq(l.map(e=>e.driver)); if(ds.length) info.push(t("rp.drvs",{v:ds.join(", ")}));
+    const ds=uniq(l.map(e=>normName(e.driver))); if(ds.length) info.push(t("rp.drvs",{v:ds.join(", ")}));
     if(odo) info.push(t("rp.odo",{o:fmt0(odo.odo), d:dmy(odo.date)}));
   } else {
     const bs=uniq(l.map(e=>e.bus)); if(bs.length) info.push(t("rp.bss",{v:bs.join(", ")}));
@@ -1629,7 +1693,7 @@ function rpDetail(g, kind){
   if(noKm) info.push(t("rp.nokm",{n:noKm}));
   const other = kind==="bus" ? "th.driver" : "th.bus";
   const rows=l.map(e=>{ const r=e.kg>0&&e.km>0 ? e.km/e.kg : null, sh=e.shift==="night"?t("shift.night"):t("shift.day");
-    return `${go("data-id",e.id,e.bus+" "+dmy(e.date))}<td>${esc(dmy(e.date).slice(0,5))}<span class="sub">${esc(sh)}</span></td><td class="l">${esc(kind==="bus" ? (e.driver||"–") : e.bus)}</td><td>${e.kg!=null?fmt(e.kg):"–"}</td><td>${e.km!=null?fmt(e.km):"–"}</td><td>${fmtR(r)}</td></tr>`; }).join("");
+    return `${go("data-id",e.id,e.bus+" "+dmy(e.date))}<td>${esc(dmy(e.date).slice(0,5))}<span class="sub">${esc(sh)}</span></td><td class="l">${esc(kind==="bus" ? (normName(e.driver)||"–") : e.bus)}</td><td>${e.kg!=null?fmt(e.kg):"–"}</td><td>${e.km!=null?fmt(e.km):"–"}</td><td>${fmtR(r)}</td></tr>`; }).join("");
   return `<button type="button" class="back" data-back="1">${esc(t(kind==="bus"?"rp.backbus":"rp.backdrv"))}</button><h2>${esc(g.label)}</h2>`
     + tilesHtml(l) + (info.length ? `<div class="info">${info.map(s=>`<p>${esc(s)}</p>`).join("")}</div>` : "")
     + `<div class="card"><div class="rtbl"><table><thead><tr>${th("th.date")+thl(other)+th("rp.kgcol")+th("rp.kmcol")+th("th.kmkg")}</tr></thead><tbody>${rows}</tbody></table></div>
@@ -1740,7 +1804,7 @@ function masterSheet(date, day, night, rd, chain, first){
   const busRow=(r,i,e,st)=>{
     B.cell("A"+r,cN(st.A,i)); B.cell("B"+r,cS(st.B,ds));
     B.cell("C"+r, e&&e.bus ? cS(st.C,e.bus) : cE(st.C));
-    B.cell("D"+r, e&&e.driver ? cS(st.D,e.driver) : cE(st.D));
+    B.cell("D"+r, e&&e.driver ? cS(st.D,normName(e.driver)) : cE(st.D));
     B.cell("E"+r, e&&isNum(e.km) ? cN(st.E,e.km) : cE(st.E));
     B.cell("F"+r, e&&isNum(e.kg) ? cN(st.F,e.kg) : cE(st.F));
     const ta=e?tval(e.arrival):null, ti=e?tval(e.pumpIn):null, to=e?tval(e.pumpOut):null;
@@ -1888,7 +1952,7 @@ function summarySheet(kind, list, title){
     const odo=[...l].reverse().find(e=>isNum(e.odo));
     const nums=[cN(XS.int,tt.n), cN(XS.num2,r2(tt.kg)), cN(XS.num2,r2(tt.km)), opt(XS.num2, rr==null?null:r2(rr)), cN(XS.int,noKm)];
     const cells = bus
-      ? [cN(XS.int,i+1), cS(4,g.label), txt(uniq(l.map(e=>e.route)).join(", ")), txt(uniq(l.map(e=>e.driver)).join(", ")), ...nums, opt(XS.int, odo?odo.odo:null)]
+      ? [cN(XS.int,i+1), cS(4,g.label), txt(uniq(l.map(e=>e.route)).join(", ")), txt(uniq(l.map(e=>normName(e.driver))).join(", ")), ...nums, opt(XS.int, odo?odo.odo:null)]
       : [cN(XS.int,i+1), cS(4,g.label), txt(uniq(l.map(e=>e.bus)).join(", ")), ...nums];
     cells.forEach((c,j)=>B.cell(C[j]+r,c)); r++;
   });
@@ -2015,7 +2079,7 @@ const ct = v => /^\d{2}:\d{2}$/.test(v||"") ? v : "";
 const cn = v => num(v);
 function cleanEntry(e){
   if(!e || typeof e!=="object" || typeof e.id!=="string" || !/^\d{4}-\d{2}-\d{2}$/.test(e.date||"")) return null;
-  return { id:e.id.slice(0,64), date:e.date, shift:e.shift==="night"?"night":"day", bus:normBus(cs(e.bus)), driver:cs(e.driver), route:cs(e.route),
+  return { id:e.id.slice(0,64), date:e.date, shift:e.shift==="night"?"night":"day", bus:normBus(cs(e.bus)), driver:normName(cs(e.driver)), route:cs(e.route),
     arrival:ct(e.arrival), pumpIn:ct(e.pumpIn), pumpOut:ct(e.pumpOut), pump:["1","2","3","4"].includes(String(e.pump))?String(e.pump):null,
     kg:cn(e.kg), km:cn(e.km), odo:cn(e.odo), by:cs(e.by), createdAt:cn(e.createdAt)||0, updatedAt:cn(e.updatedAt)||0, deleted:!!e.deleted };
 }
@@ -2101,8 +2165,11 @@ if(typeof XLSX==="undefined") startBanner="ban.xlsx";
 $("#welcome").hidden = !!store.meta.device || !canSave;
 // iPhones send Excel through the share menu, so they get their own steps on the Send tab
 if(IS_IOS){ $$("[data-i18n-html^='step']").forEach(el=>el.dataset.i18nHtml+=".ios"); const sp=document.querySelector("[data-i18n='send.p']"); if(sp) sp.dataset.i18n="send.p.ios"; }
+restoreView();
 applyLang();
-fillReadings();
+const readBack=fillReadings(), formBack=restoreDraft();
+renderViewNote();
+if(formBack) toast(t("draft.back")); else if(readBack) toast(t("draft.read"));
 if(startBanner) banner(t(startBanner), true);
 </script>
 
@@ -2119,7 +2186,7 @@ if(startBanner) banner(t(startBanner), true);
   const appUrl = location.origin + location.pathname.replace(/index\.html$/,"");
 
   /* offline cache + updates */
-  const BUILD = "1a20cbaf7f";
+  const BUILD = "802b82d15f";
   // This page is out of date when the stored copy of the app belongs to a newer version.
   async function staleCheck(){
     try{
