@@ -1,12 +1,12 @@
-# CNG Fuel Log
+# Mofat CNG Log
 
-Phone app for Mofat CNG station pump attendants: log each bus (arrival, pump in/out, pump, kg, odometer, km, route), record pump meter readings, and send Excel reports on WhatsApp.
+Mofat CNG Log is the phone app for Mofat CNG station pump attendants: log each bus (arrival, pump in/out, pump, kg, odometer, km, route), record pump meter readings, and send Excel reports on WhatsApp.
 
 **Open it:** https://amanjrma-bit.github.io/cng-fuel-log/
 
 - Works offline after the first open. Data stays on each phone.
 - Android: open in Chrome, tap **Install app** (or ⋮ → **Add to Home screen**).
-- iPhone: open in Safari, tap **Share** → **Add to Home Screen**, then open **CNG Log** from the home screen.
+- iPhone: open in Safari, tap **Share** → **Add to Home Screen**, then open **Mofat CNG Log** from the home screen.
 
 ## What's in it
 
