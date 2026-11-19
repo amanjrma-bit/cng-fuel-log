@@ -1,7 +1,7 @@
 {
   "id": "./",
-  "name": "CNG Fuel Log",
-  "short_name": "CNG Log",
+  "name": "Mofat CNG Log",
+  "short_name": "Mofat CNG Log",
   "description": "Log CNG bus fills at the station, with or without internet, and send Excel reports.",
   "start_url": "./",
   "scope": "./",
