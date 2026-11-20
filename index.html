@@ -2018,31 +2018,44 @@ const XMIME="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
    iPhone can drop the file when text comes with it. */
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
 const STANDALONE = (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone===true;
-let readyFile=null;
+let readyFile=null, readyBlob=null, filesBlocked=false;
+// Android Chrome says it can share the file, then refuses .xlsx with NotAllowedError although the tap is still
+// fresh. iPhone refuses with the same error only when the tap is too old. Telling them apart: whether the tap was
+// still active when sharing started (unknown on older iPhones, which are treated as "tap too old").
+const tapActive = () => (navigator.userActivation && typeof navigator.userActivation.isActive==="boolean") ? navigator.userActivation.isActive : null;
+function saveToDownloads(blob, name){
+  const url=URL.createObjectURL(blob), a=document.createElement("a");
+  a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),10000);
+  toast(t("saved.dl",{f:name}));
+}
 function showReady(f){ readyFile=f; $("#readyText").textContent=t("ready.text",{f:f.name}); $("#ready").hidden=false; window.scrollTo(0,0); toast(t("ready.text",{f:f.name})); }
 function hideReady(){ readyFile=null; $("#ready").hidden=true; }
 $("#readyBtn").addEventListener("click",async()=>{
   const f=readyFile; if(!f) return;
   try{ await navigator.share({files:[f]}); hideReady(); }
-  catch(e){ if(e && e.name==="AbortError") return; toast(t("share.fail")); }
+  catch(e){
+    if(e && e.name==="AbortError") return;
+    // the phone will not share this file at all: save it to Downloads instead
+    filesBlocked=true; hideReady(); saveToDownloads(f, f.name);
+  }
 });
 async function deliver(bytes, name, mime){
   const blob=new Blob([bytes],{type:mime});
   store.meta.lastExport=Date.now(); persist(); renderSend(); hideReady();
   let f=null; try{ f=new File([blob],name,{type:mime}); }catch(e){}
-  if(f && navigator.canShare && navigator.canShare({files:[f]})){
+  if(f && !filesBlocked && navigator.canShare && navigator.canShare({files:[f]})){
+    const fresh=tapActive();
     try{ await navigator.share({files:[f]}); return; }
     catch(e){
       if(e && e.name==="AbortError") return;                        // the share menu was closed
-      if(e && e.name==="NotAllowedError"){ showReady(f); return; }  // the file took a while to make: one more tap opens the menu
+      if(e && e.name==="NotAllowedError" && fresh!==true){ showReady(f); return; }   // tap too old: one more tap opens the menu
+      if(e && e.name==="NotAllowedError") filesBlocked=true;        // this phone refuses the file type (Android Chrome and .xlsx)
     }
   }
   // an iPhone home-screen app without file sharing (iOS 14 and older) gets stuck on a download screen, so don't try
   if(IS_IOS && STANDALONE){ banner(t("ios.old"), true); return; }
-  const url=URL.createObjectURL(blob), a=document.createElement("a");
-  a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(()=>URL.revokeObjectURL(url),10000);
-  toast(t("saved.dl",{f:name}));
+  saveToDownloads(blob, name);
 }
 const who = () => safeName(store.meta.device) ? "_"+safeName(store.meta.device) : "";
 function hasData(d,s){ return shiftEntries(d,s).length>0 || !!store.shifts[skey(d,s)]; }
@@ -2202,7 +2215,7 @@ if(startBanner) banner(t(startBanner), true);
   const appUrl = location.origin + location.pathname.replace(/index\.html$/,"");
 
   /* offline cache + updates */
-  const BUILD = "48a7c9927a";
+  const BUILD = "15202b2bc6";
   // This page is out of date when the stored copy of the app belongs to a newer version.
   async function staleCheck(){
     try{
